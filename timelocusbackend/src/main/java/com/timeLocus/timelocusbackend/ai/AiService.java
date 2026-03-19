@@ -33,7 +33,7 @@ public class AiService {
                 user.getFirstName(), user.getLastName(),
                 user.getUserType().name(),
                 context != null ? context : "general"
-        );
+        ); // when you want to give pre prompt then refer this code oaky???
         return callApi(systemPrompt, message);
     }
 
