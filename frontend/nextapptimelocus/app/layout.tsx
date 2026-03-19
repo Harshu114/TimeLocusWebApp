@@ -1,13 +1,12 @@
-import "./globals.css";
-
-export default function RootLayout({
+// app/(auth)/layout.tsx
+export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#04070f] relative overflow-hidden">
+      {children}
+    </div>
   );
 }
