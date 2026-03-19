@@ -6,8 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class TimelocusbackendApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(TimelocusbackendApplication.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(TimelocusbackendApplication.class, args);
+    }
 }

@@ -1,73 +1,45 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  :root {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
-  }
-
-  body {
-    @apply bg-slate-950 text-white min-h-screen;
-    /* Removed the 'FORCE TEST STYLE' for a cleaner slate-950 look */
-  }
+/* app/globals.css */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@layer utilities {
-  /* Cyberpunk Grid Background */
-  .bg-grid-slate-100 {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(241 245 249 / 0.05)'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e");
-  }
+html, body {
+  background: #080c14;
+  color: #ffffff;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
-  /* Neon Glow Effect */
-  .neon-glow {
-    box-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 15px currentColor;
-  }
+/* Global scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+::-webkit-scrollbar-thumb { background: rgba(0,220,255,0.2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,220,255,0.4); }
 
-  /* Animated Cyber Border */
-  .cyber-border {
-    border: 2px solid;
-    border-image: linear-gradient(45deg, #ff0080, #00ffff, #ffff00, #ff0080) 1;
-  }
+/* Selection highlight */
+::selection { background: rgba(0,220,255,0.25); color: #fff; }
 
-  /* Animations */
-  .animate-glitch {
-    animation: glitch 2s infinite;
-  }
+/* Remove Chrome autofill yellow background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff;
+  -webkit-box-shadow: 0 0 0px 1000px #0a1020 inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
 
-  .animate-neon-pulse {
-    animation: neon-pulse 2s ease-in-out infinite alternate;
-  }
+/* Dark select options */
+select option {
+  background: #0e1828;
+  color: #fff;
+}
 
-  .animate-scan {
-    animation: scan 3s linear infinite;
-  }
-
-  .animate-matrix {
-    animation: matrix 10s linear infinite;
-  }
-
-  @keyframes glitch {
-    0%, 100% { transform: translate(0); }
-    20% { transform: translate(-2px, 2px); }
-    40% { transform: translate(-2px, -2px); }
-    60% { transform: translate(2px, 2px); }
-    80% { transform: translate(2px, -2px); }
-  }
-
-  @keyframes neon-pulse {
-    from { filter: brightness(1) drop-shadow(0 0 5px currentColor); }
-    to { filter: brightness(1.2) drop-shadow(0 0 20px currentColor); }
-  }
-
-  @keyframes scan {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-  }
-
-  @keyframes matrix {
-    0% { transform: translateY(100vh); }
-    100% { transform: translateY(-100vh); }
-  }
+/* Remove number spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }

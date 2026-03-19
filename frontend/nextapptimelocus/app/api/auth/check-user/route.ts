@@ -1,27 +1,25 @@
 // app/api/auth/check-user/route.ts
+// This is only used as a FALLBACK during development without the Spring Boot backend.
+// In production, next.config.mjs proxies all /api/* to localhost:8080 automatically.
+
 import { NextRequest, NextResponse } from 'next/server';
 
-// Mock database - replace with real DB in production
-const users = [
-  { email: 'test@example.com', username: 'testuser' },
-  { email: 'user@example.com', username: 'user123' },
-];
-
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const identifier = searchParams.get('identifier');
+  const identifier = request.nextUrl.searchParams.get('identifier');
 
   if (!identifier) {
-    return NextResponse.json(
-      { error: 'Identifier is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'identifier required' }, { status: 400 });
   }
 
-  // Check if user exists by email or username
-  const userExists = users.some(
-    user => user.email === identifier || user.username === identifier
-  );
-
-  return NextResponse.json({ exists: userExists });
+  // Forward to Spring Boot
+  try {
+    const res = await fetch(
+      `http://localhost:8080/api/auth/check-user?identifier=${encodeURIComponent(identifier)}`
+    );
+    const data = await res.json();
+    return NextResponse.json(data, { status: res.status });
+  } catch {
+    // Dev fallback: mock response so UI doesn't break when backend is offline
+    return NextResponse.json({ exists: false, firstName: null });
+  }
 }
