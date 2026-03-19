@@ -1,3 +1,147 @@
+<<<<<<< HEAD
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import styles from "../../auth.module.css";
+
+export default function SignupPage() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== confirm) {
+      setError("Passwords don't match.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    // TODO: wire up your auth logic here
+    await new Promise((r) => setTimeout(r, 1200));
+    setLoading(false);
+    // e.g. router.push("/dashboard")
+  };
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.grid} aria-hidden />
+
+      <div className={styles.card}>
+        <div className={styles.glowRing} />
+
+        <div className={styles.logo}>
+          <span className={styles.logoIcon}>⬡</span>
+          <span className={styles.logoText}>TimeLocus</span>
+        </div>
+
+        <h1 className={styles.title}>Create account</h1>
+        <p className={styles.subtitle}>Join us — it only takes a moment</p>
+
+        {error && <div className={styles.errorBanner}>{error}</div>}
+
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="name">
+              Full Name
+            </label>
+            <div className={styles.inputWrap}>
+              <input
+                id="name"
+                type="text"
+                className={styles.input}
+                placeholder="Jane Smith"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                autoComplete="name"
+              />
+              <span className={styles.inputGlow} />
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="email">
+              Email
+            </label>
+            <div className={styles.inputWrap}>
+              <input
+                id="email"
+                type="email"
+                className={styles.input}
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+              <span className={styles.inputGlow} />
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="password">
+              Password
+            </label>
+            <div className={styles.inputWrap}>
+              <input
+                id="password"
+                type="password"
+                className={styles.input}
+                placeholder="Min. 8 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+                autoComplete="new-password"
+              />
+              <span className={styles.inputGlow} />
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="confirm">
+              Confirm Password
+            </label>
+            <div className={styles.inputWrap}>
+              <input
+                id="confirm"
+                type="password"
+                className={styles.input}
+                placeholder="••••••••"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                required
+                autoComplete="new-password"
+              />
+              <span className={styles.inputGlow} />
+            </div>
+          </div>
+
+          <button type="submit" className={styles.btn} disabled={loading}>
+            {loading ? <span className={styles.spinner} /> : "Create Account"}
+            <span className={styles.btnGlow} />
+          </button>
+        </form>
+
+        <p className={styles.switchText}>
+          Already have an account?{" "}
+          <Link href="/login" className={styles.switchLink}>
+            Sign in
+          </Link>
+        </p>
+      </div>
+
+      <div className={styles.orb1} aria-hidden />
+      <div className={styles.orb2} aria-hidden />
+    </div>
+  );
+}
+=======
 // app/(auth)/signup/page.tsx
 'use client';
 
@@ -323,3 +467,4 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+>>>>>>> parent of 3bf0053 (frontend enhancement)

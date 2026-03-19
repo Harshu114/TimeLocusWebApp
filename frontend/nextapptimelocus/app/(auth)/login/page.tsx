@@ -1,3 +1,108 @@
+<<<<<<< HEAD
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import styles from "../../auth.module.css";
+
+export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    // TODO: wire up your auth logic here
+    await new Promise((r) => setTimeout(r, 1200));
+    setLoading(false);
+    // e.g. router.push("/dashboard")
+  };
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.grid} aria-hidden />
+
+      <div className={styles.card}>
+        <div className={styles.glowRing} />
+
+        <div className={styles.logo}>
+          <span className={styles.logoIcon}>⬡</span>
+          <span className={styles.logoText}>TimeLocus</span>
+        </div>
+
+        <h1 className={styles.title}>Welcome back</h1>
+        <p className={styles.subtitle}>Sign in to continue your session</p>
+
+        {error && <div className={styles.errorBanner}>{error}</div>}
+
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="email">
+              Email
+            </label>
+            <div className={styles.inputWrap}>
+              <input
+                id="email"
+                type="email"
+                className={styles.input}
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+              <span className={styles.inputGlow} />
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="password">
+              Password
+            </label>
+            <div className={styles.inputWrap}>
+              <input
+                id="password"
+                type="password"
+                className={styles.input}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
+              <span className={styles.inputGlow} />
+            </div>
+            <div className={styles.forgotRow}>
+              <Link href="/forgot-password" className={styles.forgotLink}>
+                Forgot password?
+              </Link>
+            </div>
+          </div>
+
+          <button type="submit" className={styles.btn} disabled={loading}>
+            {loading ? (
+              <span className={styles.spinner} />
+            ) : (
+              "Sign In"
+            )}
+            <span className={styles.btnGlow} />
+          </button>
+        </form>
+
+        <p className={styles.switchText}>
+          Don&apos;t have an account?{" "}
+          <Link href="/signup" className={styles.switchLink}>
+            Create one
+          </Link>
+        </p>
+      </div>
+
+      <div className={styles.orb1} aria-hidden />
+      <div className={styles.orb2} aria-hidden />
+=======
 // app/(auth)/login/page.tsx
 'use client';
 
@@ -317,6 +422,7 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+>>>>>>> parent of 3bf0053 (frontend enhancement)
     </div>
   );
 }
