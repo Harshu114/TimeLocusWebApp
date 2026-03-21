@@ -45,7 +45,7 @@ public class Task {
         public Task build() { return t; }
     }
 
-    @PreUpdate void onUpdate() { this.updatedAt = LocalDateTime.now(); }
+    @PreUpdate void onUpdate() { this.setUpdatedAt(LocalDateTime.now()); }
 
     public String    getId()       { return id; }
     public User      getUser()     { return user; }
@@ -59,4 +59,12 @@ public class Task {
     public void setDone(boolean v)    { this.done     = v; }
     public void setPriority(String v) { this.priority = v; }
     public void setDueDate(LocalDate v){ this.dueDate = v; }
+
+	public LocalDateTime getUpdatedAt() {
+		return updatedAt;
+	}
+
+	public void setUpdatedAt(LocalDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
 }

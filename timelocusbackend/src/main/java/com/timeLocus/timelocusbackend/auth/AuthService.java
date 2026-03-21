@@ -1,5 +1,6 @@
 package com.timeLocus.timelocusbackend.auth;
 
+import com.timeLocus.timelocusbackend.auth.dto.*;
 import com.timeLocus.timelocusbackend.config.JwtService;
 import com.timeLocus.timelocusbackend.user.User;
 import com.timeLocus.timelocusbackend.user.UserRepository;
@@ -14,6 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+// @Service — marks this as a Spring-managed service bean.
+// Contains ALL business logic for authentication.
+// The controller calls these methods — it does not know HOW they work.
 @Service
 public class AuthService {
 
@@ -35,17 +39,21 @@ public class AuthService {
         this.mailSender      = mailSender;
     }
 
-    // ── Check user exists ─────────────────────────────────────────────────────
-    public AuthController.CheckUserResponse checkUser(String identifier) {
-        var user = userRepository.findByEmail(identifier.toLowerCase().trim()).orElse(null);
-        if (user == null) return new AuthController.CheckUserResponse(false, null);
-        return new AuthController.CheckUserResponse(true, user.getFirstName());
+    // ── Check if user exists ──────────────────────────────────────────────────
+    public CheckUserResponse checkUser(String identifier) {
+        return userRepository.findByEmail(identifier.toLowerCase().trim())
+                .map(u  -> new CheckUserResponse(true, u.getFirstName()))
+                .orElse(new CheckUserResponse(false, null));
     }
 
     // ── Login ─────────────────────────────────────────────────────────────────
-    public AuthController.AuthResponse login(AuthController.LoginRequest req) {
+    public AuthResponse login(LoginRequest req) {
+        // authManager.authenticate() does the password check.
+        // It calls UserDetailsServiceImpl.loadUserByUsername() internally.
+        // Throws BadCredentialsException if password is wrong → caught by GlobalExceptionHandler.
         authManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.email().toLowerCase(), req.password())
+                new UsernamePasswordAuthenticationToken(
+                        req.email().toLowerCase(), req.password())
         );
         User user = userRepository.findByEmail(req.email().toLowerCase())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -53,8 +61,8 @@ public class AuthService {
     }
 
     // ── Register ──────────────────────────────────────────────────────────────
-    @Transactional
-    public AuthController.AuthResponse register(AuthController.RegisterRequest req) {
+    @Transactional // If anything fails, database changes are rolled back
+    public AuthResponse register(RegisterRequest req) {
         if (userRepository.existsByEmail(req.email().toLowerCase())) {
             throw new IllegalArgumentException("Email already registered.");
         }
@@ -62,7 +70,7 @@ public class AuthService {
                 .firstName(req.firstName().trim())
                 .lastName(req.lastName().trim())
                 .email(req.email().toLowerCase().trim())
-                .password(passwordEncoder.encode(req.password()))
+                .password(passwordEncoder.encode(req.password())) // BCrypt hash
                 .age(req.age())
                 .gender(req.gender())
                 .profession(req.profession())
@@ -75,26 +83,24 @@ public class AuthService {
     // ── Forgot password ───────────────────────────────────────────────────────
     @Transactional
     public void sendPasswordResetEmail(String email) {
-        var userOpt = userRepository.findByEmail(email.toLowerCase().trim());
-        if (userOpt.isEmpty()) return;
+        userRepository.findByEmail(email.toLowerCase().trim()).ifPresent(user -> {
+            String token = UUID.randomUUID().toString();
+            user.setResetPasswordToken(token);
+            user.setResetTokenExpiry(LocalDateTime.now().plusHours(1));
+            userRepository.save(user);
 
-        User user  = userOpt.get();
-        String token = UUID.randomUUID().toString();
-        user.setResetPasswordToken(token);
-        user.setResetTokenExpiry(LocalDateTime.now().plusHours(1));
-        userRepository.save(user);
-
-        SimpleMailMessage msg = new SimpleMailMessage();
-        msg.setTo(email);
-        msg.setSubject("TimeLocus - Password Reset");
-        msg.setText("Reset link: http://localhost:3000/reset-password?token=" + token
-                + "\n\nExpires in 1 hour.");
-        try { mailSender.send(msg); } catch (Exception ignored) {}
+            SimpleMailMessage msg = new SimpleMailMessage();
+            msg.setTo(email);
+            msg.setSubject("TimeLocus - Password Reset");
+            msg.setText("Reset link: http://localhost:3000/reset-password?token=" + token
+                    + "\n\nExpires in 1 hour.");
+            try { mailSender.send(msg); } catch (Exception ignored) {}
+        });
     }
 
     // ── Reset password ────────────────────────────────────────────────────────
     @Transactional
-    public void resetPassword(AuthController.ResetPasswordRequest req) {
+    public void resetPassword(ResetPasswordRequest req) {
         User user = userRepository.findByResetPasswordToken(req.token())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid or expired token."));
         if (user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
@@ -107,7 +113,7 @@ public class AuthService {
     }
 
     // ── Refresh token ─────────────────────────────────────────────────────────
-    public AuthController.AuthResponse refreshToken(String refreshToken) {
+    public AuthResponse refreshToken(String refreshToken) {
         String email = jwtService.extractUsername(refreshToken);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -117,14 +123,14 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
-    // ── Helper ────────────────────────────────────────────────────────────────
-    private AuthController.AuthResponse buildAuthResponse(User user) {
+    // ── Private helper: build the auth response ───────────────────────────────
+    private AuthResponse buildAuthResponse(User user) {
         String token        = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
-        AuthController.UserResponse userResp = new AuthController.UserResponse(
+        UserResponse userResp = new UserResponse(
                 user.getId(), user.getFirstName(), user.getLastName(),
                 user.getEmail(), user.getUserType().name()
         );
-        return new AuthController.AuthResponse(token, refreshToken, userResp);
+        return new AuthResponse(token, refreshToken, userResp);
     }
 }

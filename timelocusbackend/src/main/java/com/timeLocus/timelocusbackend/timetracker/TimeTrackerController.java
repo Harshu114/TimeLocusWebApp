@@ -1,9 +1,9 @@
 package com.timeLocus.timelocusbackend.timetracker;
 
 import com.timeLocus.timelocusbackend.common.ApiResponse;
+import com.timeLocus.timelocusbackend.timetracker.dto.*;
 import com.timeLocus.timelocusbackend.user.User;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,16 +22,19 @@ public class TimeTrackerController {
         this.service = service;
     }
 
-    /** GET /time-entries?date=2024-01-15 */
+    // GET /time-entries?date=2024-01-15
+    // Returns all time entries for the logged-in user on a specific date.
     @GetMapping
     public ResponseEntity<List<TimeEntryDTO>> getByDate(
             @AuthenticationPrincipal User user,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(service.getEntriesForDate(user, date != null ? date : LocalDate.now()));
+        return ResponseEntity.ok(
+                service.getEntriesForDate(user, date != null ? date : LocalDate.now())
+        );
     }
 
-    /** GET /time-entries/range?from=...&to=... */
+    // GET /time-entries/range?from=2024-01-01&to=2024-01-31
     @GetMapping("/range")
     public ResponseEntity<List<TimeEntryDTO>> getRange(
             @AuthenticationPrincipal User user,
@@ -40,22 +43,27 @@ public class TimeTrackerController {
         return ResponseEntity.ok(service.getEntriesInRange(user, from, to));
     }
 
-    /** GET /time-entries/summary/daily */
+    // GET /time-entries/summary/daily
+    // Returns total minutes, focus score, and breakdown by category for today.
     @GetMapping("/summary/daily")
     public ResponseEntity<DailySummaryDTO> dailySummary(
             @AuthenticationPrincipal User user,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(service.getDailySummary(user, date != null ? date : LocalDate.now()));
+        return ResponseEntity.ok(
+                service.getDailySummary(user, date != null ? date : LocalDate.now())
+        );
     }
 
-    /** GET /time-entries/summary/weekly */
+    // GET /time-entries/summary/weekly
+    // Returns 7 daily summaries for Mon-Sun of the current week.
     @GetMapping("/summary/weekly")
-    public ResponseEntity<List<DailySummaryDTO>> weeklySummary(@AuthenticationPrincipal User user) {
+    public ResponseEntity<List<DailySummaryDTO>> weeklySummary(
+            @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(service.getWeeklySummary(user));
     }
 
-    /** POST /time-entries */
+    // POST /time-entries — save a manual entry
     @PostMapping
     public ResponseEntity<TimeEntryDTO> create(
             @AuthenticationPrincipal User user,
@@ -63,7 +71,7 @@ public class TimeTrackerController {
         return ResponseEntity.ok(service.createEntry(user, req));
     }
 
-    /** POST /time-entries/start */
+    // POST /time-entries/start — start a live timer, returns entry with id
     @PostMapping("/start")
     public ResponseEntity<TimeEntryDTO> startTimer(
             @AuthenticationPrincipal User user,
@@ -71,7 +79,7 @@ public class TimeTrackerController {
         return ResponseEntity.ok(service.startTimer(user, req.task(), req.category()));
     }
 
-    /** POST /time-entries/{id}/stop */
+    // POST /time-entries/{id}/stop — stop the timer, calculate duration
     @PostMapping("/{id}/stop")
     public ResponseEntity<TimeEntryDTO> stopTimer(
             @AuthenticationPrincipal User user,
@@ -79,7 +87,7 @@ public class TimeTrackerController {
         return ResponseEntity.ok(service.stopTimer(user, id));
     }
 
-    /** PUT /time-entries/{id} */
+    // PUT /time-entries/{id} — update an existing entry
     @PutMapping("/{id}")
     public ResponseEntity<TimeEntryDTO> update(
             @AuthenticationPrincipal User user,
@@ -88,7 +96,7 @@ public class TimeTrackerController {
         return ResponseEntity.ok(service.updateEntry(user, id, req));
     }
 
-    /** DELETE /time-entries/{id} */
+    // DELETE /time-entries/{id}
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<String>> delete(
             @AuthenticationPrincipal User user,
@@ -96,44 +104,4 @@ public class TimeTrackerController {
         service.deleteEntry(user, id);
         return ResponseEntity.ok(ApiResponse.success("Deleted"));
     }
-
-    // ── DTOs ──────────────────────────────────────────────────────────────────
-
-    public record TimeEntryDTO(
-            String  id,
-            String  task,
-            String  date,
-            String  startTime,
-            String  endTime,
-            Integer duration,
-            String  category,
-            String  notes,
-            boolean manual
-    ) {}
-
-    public record DailySummaryDTO(
-            String                  date,
-            int                     totalMinutes,
-            double                  focusScore,
-            int                     taskCount,
-            List<CategoryBreakdown> breakdown
-    ) {}
-
-    public record CategoryBreakdown(
-            String category,
-            int    minutes,
-            double percentage
-    ) {}
-
-    public record CreateEntryRequest(
-            @NotBlank String task,
-            String date,
-            String startTime,
-            String endTime,
-            Integer duration,
-            String category,
-            String notes
-    ) {}
-
-    public record StartTimerRequest(String task, String category) {}
 }

@@ -1,7 +1,11 @@
 package com.timeLocus.timelocusbackend.task;
 
 import com.timeLocus.timelocusbackend.common.ApiResponse;
+import com.timeLocus.timelocusbackend.task.dto.CreateTaskRequest;
+import com.timeLocus.timelocusbackend.task.dto.TaskDTO;
+import com.timeLocus.timelocusbackend.task.dto.TaskStatsDTO;
 import com.timeLocus.timelocusbackend.user.User;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,18 +20,20 @@ public class TaskController {
     @Autowired
     private TaskRepository repo;
 
+    // GET /tasks — all tasks for logged-in user, newest first
     @GetMapping
     public ResponseEntity<List<TaskDTO>> getAll(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(
-            repo.findByUserOrderByCreatedAtDesc(user)
-                .stream().map(this::toDTO).toList()
+                repo.findByUserOrderByCreatedAtDesc(user)
+                    .stream().map(this::toDTO).toList()
         );
     }
 
+    // POST /tasks — create a new task
     @PostMapping
     public ResponseEntity<TaskDTO> create(
             @AuthenticationPrincipal User user,
-            @RequestBody CreateTaskRequest req) {
+            @Valid @RequestBody CreateTaskRequest req) {
         Task t = Task.builder()
                 .user(user)
                 .title(req.title())
@@ -36,6 +42,7 @@ public class TaskController {
         return ResponseEntity.ok(toDTO(repo.save(t)));
     }
 
+    // PATCH /tasks/{id}/toggle — flip done/undone
     @PatchMapping("/{id}/toggle")
     public ResponseEntity<TaskDTO> toggle(
             @AuthenticationPrincipal User user,
@@ -46,6 +53,7 @@ public class TaskController {
         return ResponseEntity.ok(toDTO(repo.save(t)));
     }
 
+    // PUT /tasks/{id} — update title or priority
     @PutMapping("/{id}")
     public ResponseEntity<TaskDTO> update(
             @AuthenticationPrincipal User user,
@@ -58,6 +66,7 @@ public class TaskController {
         return ResponseEntity.ok(toDTO(repo.save(t)));
     }
 
+    // DELETE /tasks/{id}
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<String>> delete(
             @AuthenticationPrincipal User user,
@@ -68,11 +77,13 @@ public class TaskController {
         return ResponseEntity.ok(ApiResponse.success("Deleted"));
     }
 
+    // GET /tasks/stats — count total and done tasks
     @GetMapping("/stats")
     public ResponseEntity<TaskStatsDTO> stats(@AuthenticationPrincipal User user) {
-        long total = repo.countByUser(user);
-        long done  = repo.countByUserAndDoneTrue(user);
-        return ResponseEntity.ok(new TaskStatsDTO(total, done));
+        return ResponseEntity.ok(new TaskStatsDTO(
+                repo.countByUser(user),
+                repo.countByUserAndDoneTrue(user)
+        ));
     }
 
     private TaskDTO toDTO(Task t) {
@@ -81,8 +92,4 @@ public class TaskController {
                 t.getDueDate() != null ? t.getDueDate().toString() : null
         );
     }
-
-    public record TaskDTO(String id, String title, boolean done, String priority, String dueDate) {}
-    public record CreateTaskRequest(String title, String priority) {}
-    public record TaskStatsDTO(long total, long done) {}
 }

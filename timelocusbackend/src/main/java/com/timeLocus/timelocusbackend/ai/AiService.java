@@ -2,109 +2,203 @@ package com.timeLocus.timelocusbackend.ai;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.timeLocus.timelocusbackend.user.User;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+import okhttp3.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+// ── AiService ─────────────────────────────────────────────────────────────────
+// Supports:
+//   ollama → FREE, runs on your PC, no internet needed after setup
+//   groq   → FREE cloud, fast, fallback when ollama is offline
+//
+// Set ai.provider=ollama in application.yml to use Ollama.
+// If Ollama is offline, automatically falls back to Groq.
 @Service
 public class AiService {
 
     private static final Logger log = Logger.getLogger(AiService.class.getName());
+    private final ObjectMapper  mapper = new ObjectMapper();
 
-    @Value("${ai.provider}")        private String provider;
-    @Value("${ai.groq.api-key}")    private String groqKey;
-    @Value("${ai.groq.base-url}")   private String groqBaseUrl;
-    @Value("${ai.groq.model}")      private String groqModel;
-    @Value("${ai.openai.api-key}")  private String openaiKey;
-    @Value("${ai.openai.base-url}") private String openaiBaseUrl;
-    @Value("${ai.openai.model}")    private String openaiModel;
+    // ── Config from application.yml ───────────────────────────────────────────
+    @Value("${ai.provider:ollama}")
+    private String provider;
+
+    @Value("${ai.ollama.base-url:http://localhost:11434}")
+    private String ollamaBaseUrl;
+
+    @Value("${ai.ollama.model:phi3:mini}")
+    private String ollamaModel;
+
+    @Value("${ai.groq.api-key:}")
+    private String groqKey;
+
+    @Value("${ai.groq.base-url:https://api.groq.com/openai/v1}")
+    private String groqBaseUrl;
+
+    @Value("${ai.groq.model:llama3-8b-8192}")
+    private String groqModel;
+
+    // ── OkHttpClient — reused for all requests ────────────────────────────────
+    private final OkHttpClient httpClient = new OkHttpClient.Builder()
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(60,    TimeUnit.SECONDS)
+            .writeTimeout(10,   TimeUnit.SECONDS)
+            .build();
+
+    // ── Public API ────────────────────────────────────────────────────────────
 
     public String chat(User user, String message, String context) {
-        String systemPrompt = String.format(
-                "You are TimeLocus AI — a smart productivity assistant. " +
-                "User: %s %s, type: %s. Context: %s. Be concise and practical.",
-                user.getFirstName(), user.getLastName(),
-                user.getUserType().name(),
-                context != null ? context : "general"
-        ); // when you want to give pre prompt then refer this code oaky???
-        return callApi(systemPrompt, message);
+        return callWithFallback(buildSystemPrompt(user, context), message);
     }
 
     public String generateInsights(User user) {
-        String prompt = String.format(
-                "You are a productivity analyst. User is a %s. " +
-                "Give 3 concise, actionable productivity insights for today. Under 150 words.",
-                user.getUserType().name()
+        String system = String.format(
+            "You are a productivity coach for %s professionals. " +
+            "Give exactly 3 short actionable insights, numbered 1-3. Under 80 words total.",
+            user.getUserType().name().replace("_", " ")
         );
-        return callApi(prompt, "Generate my daily insights.");
+        return callWithFallback(system,
+            "Give me 3 productivity insights for today for " + user.getFirstName() + ".");
     }
 
     public List<String> generateRecallQuestions(String topic, String difficulty, int count) {
+        String system = "You are a tutor. Return ONLY a numbered list of questions. No intro text.";
         String prompt = String.format(
-                "Generate exactly %d active recall questions on: \"%s\". " +
-                "Difficulty: %s. Return a numbered list only, no extra text.",
-                count, topic, difficulty
+            "Generate %d %s difficulty active recall questions about: %s",
+            count, difficulty != null ? difficulty : "medium", topic
         );
-        String raw = callApi("You are an expert tutor.", prompt);
-        return raw.lines()
+        return callWithFallback(system, prompt)
+                .lines()
+                .map(String::trim)
                 .filter(l -> !l.isBlank())
                 .limit(count)
                 .toList();
     }
 
-    private String callApi(String systemPrompt, String userMessage) {
-        try {
-            String model  = "groq".equals(provider) ? groqModel  : openaiModel;
-            String apiUrl = "groq".equals(provider)
-                    ? groqBaseUrl + "/chat/completions"
-                    : openaiBaseUrl + "/chat/completions";
-            String apiKey = "groq".equals(provider) ? groqKey : openaiKey;
+    // you can give pre prompt here if anyone have better ideas then do it there and properly .... harshal  //
+    private String buildSystemPrompt(User user, String context) {
+        String role = switch (user.getUserType()) {
+            case student ->
+                "a student. Help with study techniques, exam prep, time blocking, active recall. and motivate me with quotes related to my problems";
+            case corporate ->
+                "a corporate professional. Help with meeting efficiency, KPIs, and work-life balance. also give tips about productivity relationships and pressure management";
+            case self_employed ->
+                "self-employed. Help with project management, client work, and business growth.";
+        };
+        return String.format(
+            "You are TimeLocus AI — a smart, friendly productivity assistant. gives answers in a way big broter does " +
+            "User name: %s. They are %s " +
+            "Context: %s. " +
+            "Be concise (under 120 words) least words possible, practical, and positive. " +
+            "Never mention that you are a language model.",
+            user.getFirstName(), role,
+            context != null && !context.isBlank() ? context : "general chat"
+        );
+    }
 
-            String body = String.format(
-                    "{\"model\":\"%s\",\"messages\":[" +
-                    "{\"role\":\"system\",\"content\":%s}," +
-                    "{\"role\":\"user\",\"content\":%s}" +
-                    "],\"max_tokens\":1024,\"temperature\":0.7}",
-                    model, jsonStr(systemPrompt), jsonStr(userMessage)
-            );
-
-            OkHttpClient client  = new OkHttpClient();
-            RequestBody  reqBody = RequestBody.create(
-                    body, MediaType.parse("application/json"));
-            Request request = new Request.Builder()
-                    .url(apiUrl)
-                    .post(reqBody)
-                    .addHeader("Authorization", "Bearer " + apiKey)
-                    .addHeader("Content-Type", "application/json")
-                    .build();
-
-            try (Response response = client.newCall(request).execute()) {
-                if (!response.isSuccessful() || response.body() == null) {
-                    log.warning("AI API error: " + response.code());
-                    return "AI service unavailable. Please try again.";
-                }
-                var json = new ObjectMapper().readTree(response.body().string());
-                return json.at("/choices/0/message/content").asText();
+    // ── Routing: try Ollama first, fall back to Groq ──────────────────────────
+    private String callWithFallback(String system, String userMsg) {
+        if ("ollama".equalsIgnoreCase(provider)) {
+            try {
+                String result = callOllama(system, userMsg);
+                if (result != null && !result.isBlank()) return result;
+            } catch (Exception e) {
+                log.warning("Ollama failed (" + e.getMessage() + "), trying Groq fallback...");
             }
-        } catch (Exception e) {
-            log.warning("AI call failed: " + e.getMessage());
-            return "AI service temporarily unavailable.";
+            // Fallback to Groq if Ollama is down
+            if (!groqKey.isBlank()) {
+                try {
+                    return callGroq(system, userMsg);
+                } catch (Exception e) {
+                    log.warning("Groq fallback also failed: " + e.getMessage());
+                }
+            }
+        } else {
+            try {
+                return callGroq(system, userMsg);
+            } catch (Exception e) {
+                log.warning("Groq failed: " + e.getMessage());
+            }
+        }
+        return "I'm having trouble connecting right now. Please check that Ollama is running " +
+               "(run 'ollama serve' in a terminal) or add a Groq API key as fallback.";
+    }
+
+    // ── Ollama API call ───────────────────────────────────────────────────────
+    // Ollama runs locally at localhost:11434
+    // API format: POST /api/chat with messages array (same as OpenAI chat format)
+    private String callOllama(String system, String userMsg) throws Exception {
+        String body = String.format(
+            "{\"model\":\"%s\"," +
+            "\"messages\":[" +
+            "{\"role\":\"system\",\"content\":%s}," +
+            "{\"role\":\"user\",\"content\":%s}" +
+            "]," +
+            "\"stream\":false," +
+            "\"options\":{\"num_predict\":400,\"temperature\":0.7}}",
+            ollamaModel, jsonStr(system), jsonStr(userMsg)
+        );
+
+        Request request = new Request.Builder()
+                .url(ollamaBaseUrl + "/api/chat")
+                .post(RequestBody.create(body, MediaType.parse("application/json")))
+                .build();
+
+        try (Response response = httpClient.newCall(request).execute()) {
+            if (!response.isSuccessful() || response.body() == null) {
+                throw new RuntimeException("Ollama HTTP " + response.code());
+            }
+            var json = mapper.readTree(response.body().string());
+            // Ollama response: { "message": { "content": "..." } }
+            String content = json.at("/message/content").asText();
+            if (content.isBlank()) throw new RuntimeException("Empty Ollama response");
+            return content.trim();
         }
     }
 
+    // ── Groq API call (OpenAI-compatible format) ──────────────────────────────
+    private String callGroq(String system, String userMsg) throws Exception {
+        if (groqKey.isBlank()) throw new RuntimeException("No Groq API key configured");
+
+        String body = String.format(
+            "{\"model\":\"%s\"," +
+            "\"messages\":[" +
+            "{\"role\":\"system\",\"content\":%s}," +
+            "{\"role\":\"user\",\"content\":%s}" +
+            "]," +
+            "\"max_tokens\":600," +
+            "\"temperature\":0.7}",
+            groqModel, jsonStr(system), jsonStr(userMsg)
+        );
+
+        Request request = new Request.Builder()
+                .url(groqBaseUrl + "/chat/completions")
+                .post(RequestBody.create(body, MediaType.parse("application/json")))
+                .addHeader("Authorization", "Bearer " + groqKey)
+                .build();
+
+        try (Response response = httpClient.newCall(request).execute()) {
+            if (!response.isSuccessful() || response.body() == null) {
+                throw new RuntimeException("Groq HTTP " + response.code());
+            }
+            // OpenAI format: { "choices": [{ "message": { "content": "..." } }] }
+            var json = mapper.readTree(response.body().string());
+            return json.at("/choices/0/message/content").asText().trim();
+        }
+    }
+
+    // ── Utility: safely escape a string for JSON ──────────────────────────────
     private String jsonStr(String s) {
         if (s == null) return "null";
         return "\"" + s.replace("\\", "\\\\")
                        .replace("\"", "\\\"")
                        .replace("\n", "\\n")
                        .replace("\r", "")
+                       .replace("\t", "\\t")
                 + "\"";
     }
 }

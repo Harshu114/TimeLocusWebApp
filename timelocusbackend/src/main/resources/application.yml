@@ -7,22 +7,20 @@ spring:
   application:
     name: timelocusbackend
 
-  # ── MySQL Configuration ───────────────────────────────────────────────────
   datasource:
     url: jdbc:mysql://localhost:3306/timelocus_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: root                    # your MySQL username
-    password: Harshal@114!     # your MySQL root password
+    username: root
+    password: Harshal@114!     # ← change this
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
-      ddl-auto: update                # auto creates/updates tables
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
 
-  # ── Mail (for password reset) ─────────────────────────────────────────────
   mail:
     host: smtp.gmail.com
     port: 587
@@ -39,14 +37,35 @@ jwt:
   refresh-expiration: 604800000
 
 # ── AI Configuration ──────────────────────────────────────────────────────────
+# Set provider to 'ollama' for local free AI, or 'groq' for cloud AI
 ai:
-  provider: groq
+  provider: ollama                    # ← 'ollama' (local/free) or 'groq' (cloud/free)
+
+  # Ollama — runs on your PC, completely free forever
+  # Setup: 1) Download from ollama.com
+  #        2) Run: ollama pull phi3:mini
+  #        3) Run: ollama serve
+  #        4) Ollama runs at localhost:11434 automatically
+  ollama:
+    base-url: http://localhost:11434
+    model: phi3:mini                  # ← 2.3GB, good for 4-6GB RAM
+    # Other options by RAM:
+    # tinyllama    → 637MB  (very fast, basic quality)
+    # phi3:mini    → 2.3GB  (recommended for 4-6GB RAM)
+    # llama3.2:1b  → 1.3GB  (good balance)
+    # llama3.2:3b  → 2.0GB  (better quality)
+    # llama3       → 4.7GB  (best quality, needs 8GB RAM)
+
+  # Groq — free cloud AI, used as fallback if Ollama is offline
+  # Get free API key at: console.groq.com (any email, no credit card)
   groq:
-    api-key: your-groq-api-key        # free at console.groq.com
+    api-key: ""                       # ← optional: add Groq key as fallback
     base-url: https://api.groq.com/openai/v1
     model: llama3-8b-8192
+
+  # OpenAI — paid
   openai:
-    api-key: your-openai-key
+    api-key: ""
     base-url: https://api.openai.com/v1
     model: gpt-4o-mini
 
@@ -54,7 +73,6 @@ ai:
 cors:
   allowed-origins:
     - http://localhost:3000
-    - http://localhost:5173
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging:
