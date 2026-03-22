@@ -10,7 +10,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/timelocus_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
-    password: Harshal@114!     # ← change this
+    password: Harshal@114!     # ← change this when you are runnninf locally on your pc // this is your mysql password
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
