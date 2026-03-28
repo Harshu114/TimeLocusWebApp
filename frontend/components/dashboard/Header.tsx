@@ -22,24 +22,20 @@ export default function Header({ user, activeNav, currentTime }: HeaderProps) {
   return (
     <header style={{
       padding: '14px 28px',
-      background: isDark
-        ? 'linear-gradient(180deg, rgba(6,12,24,.97) 0%, rgba(6,12,24,.92) 100%)'
-        : 'linear-gradient(180deg, rgba(240,244,255,.97) 0%, rgba(232,238,248,.95) 100%)',
-      borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,.06)' : 'rgba(100,130,200,.15)'}`,
+      background: 'var(--header-bg)',
+      borderBottom: '1px solid var(--border)',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       position: 'sticky', top: 0, zIndex: 50,
       backdropFilter: 'blur(16px)',
       transition: 'background 0.3s ease, border-color 0.3s ease',
-      boxShadow: isDark
-        ? '0 1px 20px rgba(0,0,0,0.3)'
-        : '0 1px 20px rgba(100,130,200,0.10)',
+      boxShadow: 'var(--shadow)',
     }}>
       {/* Tab title with accent underline */}
       <div style={{ position: 'relative' }}>
         <span style={{
           fontFamily: 'Orbitron, monospace',
           fontSize: '1rem', fontWeight: 700,
-          color: isDark ? '#fff' : '#1a2340',
+          color: 'var(--text)',
           letterSpacing: '0.05em',
         }}>{activeNav}</span>
         <div style={{

@@ -1,10 +1,9 @@
 'use client';
 // app/dashboard/page.tsx
-// Thin orchestrator — manages nav state and renders the correct tab component.
-
 import { useState, useEffect } from 'react';
 import { User } from '../../types';
 import { USER_TYPE_CONFIG } from '../../lib/constants';
+import { useTheme } from '../../lib/ThemeContext';
 
 import Sidebar            from '../../components/dashboard/Sidebar';
 import Header             from '../../components/dashboard/Header';
@@ -21,6 +20,7 @@ export default function DashboardPage() {
   const [user,      setUser]      = useState<User | null>(null);
   const [activeNav, setActiveNav] = useState('Dashboard');
   const [time,      setTime]      = useState(new Date());
+  const { isDark } = useTheme();
 
   useEffect(() => {
     const stored = localStorage.getItem('tl_user');
@@ -52,7 +52,7 @@ export default function DashboardPage() {
   const renderTab = () => {
     if (activeNav === 'Dashboard')                                                    return <DashboardTab   user={user} accent={accent} />;
     if (activeNav === 'Time Tracker')                                                 return <TimeTrackerTab accent={accent} />;
-    if (['Planner','Meetings','Projects'].includes(activeNav))                        return <PlannerTab     accent={accent} label={activeNav} />;
+    if (['Planner','Meetings','Projects'].includes(activeNav))                        return <PlannerTab     accent={accent} label={activeNav} user={user} />;
     if (activeNav === 'Focus Zone')                                                   return <FocusZoneTab   accent={accent} />;
     if (activeNav === 'Tasks')                                                        return <TasksTab       accent={accent} />;
     if (['Progress','Reports','Goals','Revenue','Exams','Team'].includes(activeNav))  return <ProgressTab    accent={accent} />;
@@ -62,25 +62,28 @@ export default function DashboardPage() {
     return <div style={{ color:'rgba(255,255,255,.4)', padding:40, textAlign:'center' }}>Coming soon...</div>;
   };
 
+  const bg  = isDark ? '#080c14' : '#eef2fc';
+  const col = isDark ? '#fff'    : '#1a2340';
+
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Exo+2:wght@300;400;500;600&display=swap');
         *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
-        body { background:#080c14; overflow-x:hidden; }
+        body { background:${bg}; overflow-x:hidden; color:${col}; transition: background .3s, color .3s; }
         ::-webkit-scrollbar { width:5px; height:5px; }
-        ::-webkit-scrollbar-track { background:rgba(255,255,255,.03); }
-        ::-webkit-scrollbar-thumb { background:rgba(0,220,255,.2); border-radius:3px; }
-        select option { background:#0e1828; color:#fff; }
+        ::-webkit-scrollbar-track { background:${isDark ? 'rgba(255,255,255,.03)' : 'rgba(100,130,200,.05)'}; }
+        ::-webkit-scrollbar-thumb { background:${isDark ? 'rgba(0,220,255,.2)' : 'rgba(100,130,200,.3)'}; border-radius:3px; }
+        select option { background:${isDark ? '#0e1828' : '#fff'}; color:${col}; }
         input[type=date]::-webkit-calendar-picker-indicator,
-        input[type=time]::-webkit-calendar-picker-indicator { filter:invert(1); opacity:.5; cursor:pointer; }
+        input[type=time]::-webkit-calendar-picker-indicator { filter:${isDark ? 'invert(1)' : 'none'}; opacity:.6; cursor:pointer; }
       `}</style>
 
-      <div style={{ display:'flex', minHeight:'100vh', background:'#080c14', fontFamily:"'Exo 2',sans-serif", color:'#fff' }}>
+      <div style={{ display:'flex', minHeight:'100vh', background:bg, fontFamily:"'Exo 2',sans-serif", color:col }}>
         <Sidebar user={user} activeNav={activeNav} onNavChange={setActiveNav} onSignOut={handleSignOut} />
-        <main style={{ marginLeft:240, flex:1, display:'flex', flexDirection:'column', minHeight:'100vh' }}>
+        <main style={{ marginLeft:240, flex:1, display:'flex', flexDirection:'column', minHeight:'100vh', background:bg }}>
           <Header user={user} activeNav={activeNav} currentTime={time} />
-          <div style={{ padding:'24px 28px', flex:1 }}>
+          <div style={{ padding:'24px 28px', flex:1, background:bg }}>
             {renderTab()}
           </div>
         </main>

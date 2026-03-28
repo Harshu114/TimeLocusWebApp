@@ -1,6 +1,5 @@
 package com.timeLocus.timelocusbackend.planner.dto;
 
-// What the API returns for a single planner event
 public record PlannerEventDTO(
         String  id,
         String  title,
@@ -8,5 +7,12 @@ public record PlannerEventDTO(
         String  date,
         String  time,
         String  eventType,
-        boolean done
+        boolean done,
+        // Rich fields
+        String  priority,
+        String  notes,
+        String  subtasksJson,
+        String  tagsJson,
+        Integer estimatedMins,
+        boolean aiGenerated
 ) {}

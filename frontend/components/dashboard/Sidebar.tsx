@@ -19,10 +19,10 @@ export default function Sidebar({ user, activeNav, onNavChange, onSignOut }: Sid
   const navItems = NAV_ITEMS[effectiveType] || NAV_ITEMS.student;
   const { isDark } = useTheme();
 
-  const borderClr = isDark ? 'rgba(255,255,255,.06)' : 'rgba(100,130,200,.15)';
-  const textClr   = isDark ? 'rgba(255,255,255,.45)' : 'rgba(74,86,128,.7)';
-  const headClr   = isDark ? '#fff' : '#1a2340';
-  const bgColor   = isDark ? 'rgba(6,12,24,.97)' : 'rgba(230,238,255,.97)';
+  const borderClr = 'var(--border)';
+  const textClr   = 'var(--text2)';
+  const headClr   = 'var(--text)';
+  const bgColor   = 'var(--sidebar-bg)';
 
   return (
     <aside style={{
