@@ -28,15 +28,20 @@ public class PlannerEvent {
 
     private LocalTime eventTime;
 
-    private String eventType; // work, meeting, deadline, personal, exam
+    private String eventType;
 
     @Column(nullable = false)
     private boolean done = false;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(nullable = false, updatable = false,
+            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    private LocalDateTime createdAt;
 
-    // ── Constructors ──────────────────────────────────────────────────────────
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdAt == null) this.createdAt = LocalDateTime.now();
+    }
+
     public PlannerEvent() {}
 
     public static Builder builder() { return new Builder(); }
@@ -52,7 +57,6 @@ public class PlannerEvent {
         public PlannerEvent build() { return e; }
     }
 
-    // ── Getters / Setters ─────────────────────────────────────────────────────
     public String        getId()          { return id; }
     public User          getUser()        { return user; }
     public String        getTitle()       { return title; }

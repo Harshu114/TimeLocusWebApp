@@ -28,22 +28,25 @@ public class TimeEntry {
     private LocalTime startTime;
     private LocalTime endTime;
 
-    /** Duration in minutes */
     private Integer duration;
 
-    private String category;   // work, study, break, meeting, personal
+    private String category;
     private String notes;
 
     @Column(nullable = false)
     private boolean manual = false;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(nullable = false, updatable = false,
+            columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    private LocalDateTime createdAt;
 
-    // ── Constructors ──────────────────────────────────────────────────────────
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdAt == null) this.createdAt = LocalDateTime.now();
+    }
+
     public TimeEntry() {}
 
-    // ── Builder ───────────────────────────────────────────────────────────────
     public static Builder builder() { return new Builder(); }
 
     public static class Builder {
@@ -62,7 +65,6 @@ public class TimeEntry {
         public TimeEntry build() { return e; }
     }
 
-    // ── Getters / Setters ─────────────────────────────────────────────────────
     public String        getId()        { return id; }
     public User          getUser()      { return user; }
     public String        getTask()      { return task; }

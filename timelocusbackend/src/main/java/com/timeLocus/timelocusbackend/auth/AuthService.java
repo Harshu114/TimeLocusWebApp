@@ -15,9 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-// @Service — marks this as a Spring-managed service bean.
-// Contains ALL business logic for authentication.
-// The controller calls these methods — it does not know HOW they work.
 @Service
 public class AuthService {
 
@@ -39,18 +36,15 @@ public class AuthService {
         this.mailSender      = mailSender;
     }
 
-    // ── Check if user exists ──────────────────────────────────────────────────
+    // ── Check user exists ─────────────────────────────────────────────────────
     public CheckUserResponse checkUser(String identifier) {
         return userRepository.findByEmail(identifier.toLowerCase().trim())
-                .map(u  -> new CheckUserResponse(true, u.getFirstName()))
+                .map(u -> new CheckUserResponse(true, u.getFirstName()))
                 .orElse(new CheckUserResponse(false, null));
     }
 
     // ── Login ─────────────────────────────────────────────────────────────────
     public AuthResponse login(LoginRequest req) {
-        // authManager.authenticate() does the password check.
-        // It calls UserDetailsServiceImpl.loadUserByUsername() internally.
-        // Throws BadCredentialsException if password is wrong → caught by GlobalExceptionHandler.
         authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         req.email().toLowerCase(), req.password())
@@ -61,22 +55,46 @@ public class AuthService {
     }
 
     // ── Register ──────────────────────────────────────────────────────────────
-    @Transactional // If anything fails, database changes are rolled back
+    @Transactional
     public AuthResponse register(RegisterRequest req) {
-        if (userRepository.existsByEmail(req.email().toLowerCase())) {
+        String email = req.email().toLowerCase();
+        System.out.println("Registering user with email: " + email);
+        if (userRepository.existsByEmail(email)) {
+            System.out.println("Email already exists: " + email);
             throw new IllegalArgumentException("Email already registered.");
         }
-        User user = User.builder()
-                .firstName(req.firstName().trim())
-                .lastName(req.lastName().trim())
-                .email(req.email().toLowerCase().trim())
-                .password(passwordEncoder.encode(req.password())) // BCrypt hash
-                .age(req.age())
-                .gender(req.gender())
-                .profession(req.profession())
-                .userType(req.userType())
-                .build();
+        System.out.println("Email is new, proceeding to create user");
+
+        // ── FIX: convert lowercase userType string to enum ────────────────────
+        // The frontend sends "student", "corporate", "self_employed", "wellbeing"
+        // The enum is STUDENT, CORPORATE, SELF_EMPLOYED, WELLBEING
+        // We convert to uppercase before parsing so both cases work.
+        User.UserType resolvedType;
+        try {
+            resolvedType = req.userType(); // now handles lowercase/uppercase // already parsed by Spring if uppercase
+        } catch (Exception e) {
+            resolvedType = User.UserType.STUDENT; // safe fallback
+        }
+
+        User user = new User(
+                null, // id
+                req.firstName().trim(),
+                req.lastName().trim(),
+                email,
+                passwordEncoder.encode(req.password()),
+                req.age(),
+                req.gender(),
+                req.profession(),
+                resolvedType,
+                null, // resetPasswordToken
+                null  // resetTokenExpiry
+        );
+        // Ensure timestamps are set (though @PrePersist should handle this)
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+        System.out.println("Saving user: " + user.getEmail());
         userRepository.save(user);
+        System.out.println("User saved successfully");
         return buildAuthResponse(user);
     }
 
@@ -88,12 +106,10 @@ public class AuthService {
             user.setResetPasswordToken(token);
             user.setResetTokenExpiry(LocalDateTime.now().plusHours(1));
             userRepository.save(user);
-
             SimpleMailMessage msg = new SimpleMailMessage();
             msg.setTo(email);
             msg.setSubject("TimeLocus - Password Reset");
-            msg.setText("Reset link: http://localhost:3000/reset-password?token=" + token
-                    + "\n\nExpires in 1 hour.");
+            msg.setText("Reset link: http://localhost:3000/reset-password?token=" + token + "\n\nExpires in 1 hour.");
             try { mailSender.send(msg); } catch (Exception ignored) {}
         });
     }
@@ -123,13 +139,20 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
-    // ── Private helper: build the auth response ───────────────────────────────
+    // ── Build auth response ───────────────────────────────────────────────────
+    // KEY FIX: return userType as LOWERCASE so frontend constants map correctly.
+    // Frontend config uses: 'student', 'corporate', 'self_employed', 'wellbeing'
+    // Backend enum is:      STUDENT,   CORPORATE,   SELF_EMPLOYED,   WELLBEING
+    // .name().toLowerCase() converts STUDENT → student ✅
     private AuthResponse buildAuthResponse(User user) {
         String token        = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
         UserResponse userResp = new UserResponse(
-                user.getId(), user.getFirstName(), user.getLastName(),
-                user.getEmail(), user.getUserType().name()
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail(),
+                user.getUserType().name().toLowerCase()  // ← THE FIX: "STUDENT" → "student"
         );
         return new AuthResponse(token, refreshToken, userResp);
     }

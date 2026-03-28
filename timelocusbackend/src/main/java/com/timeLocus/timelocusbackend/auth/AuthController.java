@@ -40,6 +40,8 @@ public class AuthController {
     // POST /auth/register — body: full registration form
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest req) {
+        // Debug log the request
+        System.out.println("Register request: " + req);
         return ResponseEntity.ok(authService.register(req));
     }
 

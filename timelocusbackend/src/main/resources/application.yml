@@ -48,7 +48,7 @@ ai:
   #        4) Ollama runs at localhost:11434 automatically
   ollama:
     base-url: http://localhost:11434
-    model: phi3:mini                  # ← 2.3GB, good for 4-6GB RAM
+    model: qwen2.5-coder:3b #phi3:mini                  # ← 2.3GB, good for 4-6GB RAM
     # Other options by RAM:
     # tinyllama    → 637MB  (very fast, basic quality)
     # phi3:mini    → 2.3GB  (recommended for 4-6GB RAM)

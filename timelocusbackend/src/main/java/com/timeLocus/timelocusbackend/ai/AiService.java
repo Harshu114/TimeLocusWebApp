@@ -82,12 +82,14 @@ public class AiService {
     // you can give pre prompt here if anyone have better ideas then do it there and properly .... harshal  //
     private String buildSystemPrompt(User user, String context) {
         String role = switch (user.getUserType()) {
-            case student ->
+            case STUDENT ->
                 "a student. Help with study techniques, exam prep, time blocking, active recall. and motivate me with quotes related to my problems";
-            case corporate ->
-                "a corporate professional. Help with meeting efficiency, KPIs, and work-life balance. also give tips about productivity relationships and pressure management";
-            case self_employed ->
+            case CORPORATE ->
+                "a corporate professional. Help with meeting efficiency, KPIs, and work-life balance. also give tips about productivity relationships and pressure management... strctly only these topic for caroprate ";
+            case SELF_EMPLOYED ->
                 "self-employed. Help with project management, client work, and business growth.";
+            case WELLBEING ->
+                "focused on personal wellbeing and growth. Help with habit building, mindfulness, journaling, work-life balance, and self-improvement. Encourage healthy routines and personal development.";
         };
         return String.format(
             "You are TimeLocus AI — a smart, friendly productivity assistant. gives answers in a way big broter does " +
@@ -132,16 +134,27 @@ public class AiService {
     // Ollama runs locally at localhost:11434
     // API format: POST /api/chat with messages array (same as OpenAI chat format)
     private String callOllama(String system, String userMsg) throws Exception {
-        String body = String.format(
-            "{\"model\":\"%s\"," +
-            "\"messages\":[" +
-            "{\"role\":\"system\",\"content\":%s}," +
-            "{\"role\":\"user\",\"content\":%s}" +
-            "]," +
-            "\"stream\":false," +
-            "\"options\":{\"num_predict\":400,\"temperature\":0.7}}",
-            ollamaModel, jsonStr(system), jsonStr(userMsg)
-        );
+        var messages = mapper.createArrayNode();
+        var systemMsg = mapper.createObjectNode();
+        systemMsg.put("role", "system");
+        systemMsg.put("content", system);
+        messages.add(systemMsg);
+        var userMessage = mapper.createObjectNode();
+        userMessage.put("role", "user");
+        userMessage.put("content", userMsg);
+        messages.add(userMessage);
+
+        var options = mapper.createObjectNode();
+        options.put("num_predict", 400);
+        options.put("temperature", 0.7);
+
+        var bodyNode = mapper.createObjectNode();
+        bodyNode.put("model", ollamaModel);
+        bodyNode.set("messages", messages);
+        bodyNode.put("stream", false);
+        bodyNode.set("options", options);
+
+        String body = mapper.writeValueAsString(bodyNode);
 
         Request request = new Request.Builder()
                 .url(ollamaBaseUrl + "/api/chat")
@@ -164,16 +177,23 @@ public class AiService {
     private String callGroq(String system, String userMsg) throws Exception {
         if (groqKey.isBlank()) throw new RuntimeException("No Groq API key configured");
 
-        String body = String.format(
-            "{\"model\":\"%s\"," +
-            "\"messages\":[" +
-            "{\"role\":\"system\",\"content\":%s}," +
-            "{\"role\":\"user\",\"content\":%s}" +
-            "]," +
-            "\"max_tokens\":600," +
-            "\"temperature\":0.7}",
-            groqModel, jsonStr(system), jsonStr(userMsg)
-        );
+        var messages = mapper.createArrayNode();
+        var systemMsg = mapper.createObjectNode();
+        systemMsg.put("role", "system");
+        systemMsg.put("content", system);
+        messages.add(systemMsg);
+        var userMessage = mapper.createObjectNode();
+        userMessage.put("role", "user");
+        userMessage.put("content", userMsg);
+        messages.add(userMessage);
+
+        var bodyNode = mapper.createObjectNode();
+        bodyNode.put("model", groqModel);
+        bodyNode.set("messages", messages);
+        bodyNode.put("max_tokens", 600);
+        bodyNode.put("temperature", 0.7);
+
+        String body = mapper.writeValueAsString(bodyNode);
 
         Request request = new Request.Builder()
                 .url(groqBaseUrl + "/chat/completions")
@@ -191,14 +211,5 @@ public class AiService {
         }
     }
 
-    // ── Utility: safely escape a string for JSON ──────────────────────────────
-    private String jsonStr(String s) {
-        if (s == null) return "null";
-        return "\"" + s.replace("\\", "\\\\")
-                       .replace("\"", "\\\"")
-                       .replace("\n", "\\n")
-                       .replace("\r", "")
-                       .replace("\t", "\\t")
-                + "\"";
-    }
+
 }
