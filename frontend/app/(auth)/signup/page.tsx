@@ -253,7 +253,7 @@ export default function SignupPage() {
 
       <div className="sp-root">
         <div className="sp-bg" /><div className="sp-grid" />
-        <div style={{ position:'fixed', top:16, right:16, zIndex:200 }}><ThemeToggle /></div>
+        <div style={{ position:'fixed', top:16, right:16, zIndex:9999, background:'rgba(0,0,0,0.45)', backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)', borderRadius:40, padding:'5px 8px', border:'1px solid rgba(255,255,255,0.18)', display:'flex', alignItems:'center' }}><ThemeToggle size="sm" /></div>
         {particles.map(p => (
           <span key={p.id} className="sp-emoji" style={{ left:`${p.x}%`,top:`${p.y}%`,fontSize:`${p.size}px`,opacity:p.opacity,transform:`rotate(${p.rotation}deg)` }}>{p.emoji}</span>
         ))}

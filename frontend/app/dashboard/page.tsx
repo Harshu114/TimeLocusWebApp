@@ -19,7 +19,7 @@ import { JournalTab }     from '../../components/dashboard/tabs/JournalTab';
 export default function DashboardPage() {
   const [user,      setUser]      = useState<User | null>(null);
   const [activeNav, setActiveNav] = useState('Dashboard');
-  const [time,      setTime]      = useState(new Date());
+  const [currentTime, setCurrentTime] = useState(new Date());
   const { isDark } = useTheme();
 
   useEffect(() => {
@@ -29,9 +29,13 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    const t = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(t);
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
   }, []);
+
+
 
   const handleSignOut = () => {
     localStorage.removeItem('tl_token');
@@ -82,7 +86,7 @@ export default function DashboardPage() {
       <div style={{ display:'flex', minHeight:'100vh', background:bg, fontFamily:"'Exo 2',sans-serif", color:col }}>
         <Sidebar user={user} activeNav={activeNav} onNavChange={setActiveNav} onSignOut={handleSignOut} />
         <main style={{ marginLeft:240, flex:1, display:'flex', flexDirection:'column', minHeight:'100vh', background:bg }}>
-          <Header user={user} activeNav={activeNav} currentTime={time} />
+          <Header user={user} activeNav={activeNav} currentTime={currentTime} />
           <div style={{ padding:'24px 28px', flex:1, background:bg }}>
             {renderTab()}
           </div>

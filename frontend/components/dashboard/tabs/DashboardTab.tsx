@@ -15,11 +15,14 @@ export default function DashboardTab({ user, accent }: Props) {
   const [weekHours, setWeekHours] = useState<number[]>([0,0,0,0,0,0,0]);
   const [entries,   setEntries]   = useState<TimeEntry[]>([]);
   const [taskStats, setTaskStats] = useState({ total:0, done:0 });
+  const [agenda, setAgenda] = useState<any[]>([]);
+  const [pendingTasks, setPendingTasks] = useState<any[]>([]);
+  const [focusStats, setFocusStats] = useState({ sessions: 0 });
   const [tracking,  setTracking]  = useState(false);
   const [trackTask, setTrackTask] = useState('');
   const [trackSecs, setTrackSecs] = useState(0);
   const [activeId,  setActiveId]  = useState<string|null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const accentR  = accentRgb(accent);
   const { isDark } = useTheme();
 
@@ -36,12 +39,17 @@ export default function DashboardTab({ user, accent }: Props) {
 
   const load = useCallback(async () => {
     try {
-      const [sumRes, entRes, taskRes, weekRes] = await Promise.all([
+      const todayISO = new Date().toISOString().slice(0, 10);
+      const [sumRes, entRes, taskRes, weekRes, plannerRes, tasksListRes, focusRes] = await Promise.all([
         api('/time-entries/summary/daily'),
         api('/time-entries'),
         api('/tasks/stats'),
         api('/productivity/weekly'),
+        api('/planner'),
+        api('/tasks'),
+        api('/focus/today')
       ]);
+
       if (sumRes.ok)  setSummary(await sumRes.json());
       if (entRes.ok)  setEntries(await entRes.json());
       if (taskRes.ok) setTaskStats(await taskRes.json());
@@ -53,6 +61,23 @@ export default function DashboardTab({ user, accent }: Props) {
           arr[idx] = Math.round(d.totalMinutes/60*10)/10;
         });
         setWeekHours(arr);
+      }
+      if (plannerRes.ok) {
+        const evs = await plannerRes.json() as any[];
+        const todays = evs.filter(e => e.date === todayISO && !e.done)
+                          .sort((a,b) => (a.time||'').localeCompare(b.time||''));
+        setAgenda(todays.slice(0, 3));
+      }
+      if (tasksListRes.ok) {
+        const tsk = await tasksListRes.json() as {id:string, title:string, done:boolean, priority:string}[];
+        const pValues: Record<string,number> = { critical:4, high:3, medium:2, low:1 };
+        const open = tsk.filter(t => !t.done)
+                        .sort((a,b) => (pValues[b.priority] || 0) - (pValues[a.priority] || 0));
+        setPendingTasks(open.slice(0, 3));
+      }
+      if (focusRes.ok) {
+        const f = await focusRes.json();
+        setFocusStats(f);
       }
     } catch {}
   }, []);
@@ -88,6 +113,22 @@ export default function DashboardTab({ user, accent }: Props) {
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:24 }}>
+      <style>{`
+        .dash-grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
+        .dash-grid-halves { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .dash-grid-timeline { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        
+        @media (max-width: 900px) {
+          .dash-grid-timeline { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+          .dash-grid-halves { grid-template-columns: 1fr; gap: 16px; }
+          .dash-grid-stats { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+        }
+        @media (max-width: 480px) {
+          .dash-grid-stats { grid-template-columns: repeat(2, 1fr); }
+        }
+      `}</style>
       {/* Greeting */}
       <div>
         <h2 style={{ fontFamily:'Orbitron,monospace', fontSize:'1.5rem', fontWeight:700, color:text, marginBottom:6, textShadow:`0 0 30px rgba(${accentR},.15)` }}>
@@ -123,9 +164,10 @@ export default function DashboardTab({ user, accent }: Props) {
       </div>
 
       {/* Stats grid */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16 }}>
+      <div className="dash-grid-stats">
         {[
           { icon:'⏰', val: summary ? fmtDur(summary.totalMinutes) : '0m',  label:'Tracked Today' },
+          { icon:'🍅', val: focusStats.sessions.toString(), label:'Focus Sessions' },
           { icon:'🎯', val: summary ? `${Math.round(summary.focusScore)}%` : '0%', label:'Focus Score' },
           { icon:'✅', val: `${taskStats.done} / ${taskStats.total}`, label:'Tasks Done' },
           { icon:'📊', val: `${weekHours.reduce((a,b)=>a+b,0).toFixed(1)}h`, label:'This Week' },
@@ -146,8 +188,52 @@ export default function DashboardTab({ user, accent }: Props) {
         ))}
       </div>
 
+      {/* Up Next & Priorities Row */}
+      <div className="dash-grid-halves">
+        {/* Agenda */}
+        <Card title="📅 Up Next" accent={accent}>
+          {agenda.length === 0 ? (
+            <div style={{ color:text3, fontSize:'.85rem', textAlign:'center', padding:'20px 0' }}>No scheduled events remaining today! 🎉</div>
+          ) : (
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              {agenda.map(e => (
+                <div key={e.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', background:chipBg, border:`1px solid ${chipBdr}`, borderRadius:8 }}>
+                  <div style={{ width:10, height:10, borderRadius:'50%', border:`2px solid ${accent}`, background:'transparent' }} />
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:text, fontSize:'.9rem', fontWeight:600 }}>{e.title}</div>
+                    <div style={{ color:text2, fontSize:'.75rem' }}>{e.time ? `${e.time}` : 'Anytime'} • {e.estimatedMins ? `${e.estimatedMins}m` : 'Event'}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* Priorities */}
+        <Card title="🚀 Top Priorities" accent={accent}>
+          {pendingTasks.length === 0 ? (
+            <div style={{ color:text3, fontSize:'.85rem', textAlign:'center', padding:'20px 0' }}>All caught up on tasks! ✅</div>
+          ) : (
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              {pendingTasks.map(t => {
+                const pColor = t.priority === 'high' ? '#ff4060' : t.priority === 'critical' ? '#e8334a' : t.priority === 'medium' ? '#ffcc00' : '#00ff88';
+                return (
+                  <div key={t.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', background:chipBg, border:`1px solid ${chipBdr}`, borderRadius:8 }}>
+                    <div style={{ width:8, height:8, borderRadius:'50%', background:pColor, boxShadow:`0 0 6px ${pColor}` }} />
+                    <div style={{ flex:1 }}>
+                      <div style={{ color:text, fontSize:'.9rem', fontWeight:500 }}>{t.title}</div>
+                      <div style={{ color:text3, fontSize:'.7rem', textTransform:'uppercase', marginTop:2 }}>{t.priority}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+      </div>
+
       {/* Timeline + Weekly */}
-      <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:20 }}>
+      <div className="dash-grid-timeline">
         <Card title="📅 Today's Timeline" accent={accent}>
           {entries.length === 0
             ? <p style={{ color:text3, fontSize:'.88rem', textAlign:'center', padding:'24px 0' }}>No entries yet. Start the timer above!</p>
@@ -197,7 +283,7 @@ export default function DashboardTab({ user, accent }: Props) {
       {/* Breakdown */}
       {summary && summary.breakdown.length > 0 && (
         <Card title="🗂️ Today's Breakdown" accent={accent}>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:12 }}>
+          <div className="dash-grid-halves" style={{ gap: 12 }}>
             {summary.breakdown.map(b => (
               <div key={b.category}>
                 <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6, fontSize:'.84rem' }}>
