@@ -1,4 +1,5 @@
 /* globals.css */
+@import '@xyflow/react/dist/style.css';
 /* CSS variables — defaults (dark). ThemeContext.tsx overrides at runtime. */
 :root {
   --bg:              #080c14;

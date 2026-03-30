@@ -1,4 +1,5 @@
 server:
+  address: 0.0.0.0
   port: 8080
   servlet:
     context-path: /api
@@ -73,6 +74,8 @@ ai:
 cors:
   allowed-origins:
     - http://localhost:3000
+    - http://117.99.242.83:3000  # Replace with your PC's WiFi IP:3000
+    - http://*:3000              # Wildcard subnet if dynamic IP
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging:

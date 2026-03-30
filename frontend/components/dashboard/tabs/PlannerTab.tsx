@@ -12,6 +12,7 @@ import { CalendarView, WeekView } from './planner/CalendarView';
 import { GanttView }              from './planner/GanttView';
 import { TemplatesView }          from './planner/TemplatesView';
 import { PersonalView }           from './planner/PersonalView';
+import { CanvasView }             from './planner/CanvasView';
 
 /* ── Types ─────────────────────────────────────────── */
 interface SubTask { id:string; text:string; done:boolean; estimatedMins?:number; }
@@ -51,10 +52,11 @@ export default function PlannerTab({accent,label,user}:{accent:string;label:stri
   const {isDark} = useTheme();
 
   const [events,    setEvents]    = useState<RichEvent[]>([]);
-  const [view,      setView]      = useState<'today'|'calendar'|'week'|'gantt'|'schedule'|'ai'|'habits'|'goals'|'inbox'|'templates'|'personal'>('today');
+  const [view,      setView]      = useState<'today'|'calendar'|'week'|'gantt'|'schedule'|'canvas'|'ai'|'habits'|'goals'|'inbox'|'templates'|'personal'>('today');
   const [expanded,  setExpanded]  = useState<Set<string>>(new Set());
   const [editNotes, setEditNotes] = useState<string|null>(null);
   const [notesVal,  setNotesVal]  = useState('');
+  const [selectedCanvasGoal, setSelectedCanvasGoal] = useState<string|null>(null);
   const [showAdd,   setShowAdd]   = useState(false);
   const [addLoading,setAddLoading]= useState(false);
   const [newSub,    setNewSub]    = useState('');
@@ -104,11 +106,44 @@ export default function PlannerTab({accent,label,user}:{accent:string;label:stri
   const load = useCallback(async()=>{ try{ const r=await api('/planner'); if(r.ok) setEvents((await r.json()).map(parseEv)); }catch{} },[]);
   useEffect(()=>{ load(); },[load]);
 
+  /* ── Virtual Canvas Events ── */
+  const [virtualEvs, setVirtualEvs] = useState<RichEvent[]>([]);
+  useEffect(() => {
+    try {
+      const v: RichEvent[] = [];
+      const now = new Date();
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('tl_canvas_nodes_')) {
+          const arr = JSON.parse(localStorage.getItem(key) || '[]');
+          const dailies = arr.filter((x: any) => x.data?.goalType === 'daily');
+          if (dailies.length > 0) {
+            dailies.forEach((n: any) => {
+              for (let d = -30; d < 60; d++) {
+                const date = new Date(now);
+                date.setDate(now.getDate() + d);
+                v.push({
+                  id: `v-${n.id}-${d}`,
+                  title: `🔁 ${n.data.label}`,
+                  date: date.toISOString().slice(0, 10),
+                  eventType: 'habit',
+                  done: false
+                });
+              }
+            });
+          }
+        }
+      }
+      setVirtualEvs(v);
+    } catch {}
+  }, [view, selectedCanvasGoal]);
+
   /* ── Derived ── */
+  const combinedEvents = [...events, ...virtualEvs];
   const todayStr  = todayISO();
-  const todayEvs  = events.filter(e=>e.date===todayStr).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
-  const futureEvs = events.filter(e=>e.date>todayStr);
-  const pastEvs   = events.filter(e=>e.date<todayStr);
+  const todayEvs  = combinedEvents.filter(e=>e.date===todayStr).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  const futureEvs = combinedEvents.filter(e=>e.date>todayStr);
+  const pastEvs   = combinedEvents.filter(e=>e.date<todayStr);
   const openToday = todayEvs.filter(e=>!e.done).length;
   const doneToday = todayEvs.filter(e=>e.done).length;
   const allSubs   = todayEvs.reduce((a,e)=>a+(e.subtasks?.length||0),0);
@@ -170,7 +205,7 @@ export default function PlannerTab({accent,label,user}:{accent:string;label:stri
   const last7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return d.toISOString().slice(0,10);});
 
   /* ─── EVENT CARD ─── */
-  const EventCard = ({e,compact=false}:{e:RichEvent;compact?:boolean}) => {
+  const renderEventCard = (e: RichEvent, compact: boolean = false) => {
     const subs=e.subtasks||[]; const done=subs.filter(s=>s.done).length;
     const prog=subs.length>0?Math.round((done/subs.length)*100):e.done?100:0;
     const pc=PRI[e.priority||'medium']||PRI.medium;
@@ -179,7 +214,7 @@ export default function PlannerTab({accent,label,user}:{accent:string;label:stri
     const isExp=expanded.has(e.id); const isEd=editNotes===e.id;
 
     return (
-      <div style={{background:sf,border:`1px solid ${br}`,borderLeft:`3px solid ${pc.color}`,borderRadius:10,marginBottom:8,overflow:'hidden',boxShadow:sh,opacity:e.done?.6:1,transition:'opacity .2s'}}>
+      <div key={e.id} style={{background:sf,borderTop:`1px solid ${br}`,borderRight:`1px solid ${br}`,borderBottom:`1px solid ${br}`,borderLeft:`3px solid ${pc.color}`,borderRadius:10,marginBottom:8,overflow:'hidden',boxShadow:sh,opacity:e.done?.6:1,transition:'opacity .2s'}}>
         <div style={{display:'flex',alignItems:'center',gap:10,padding:compact?'9px 14px':'12px 16px'}}>
           <div onClick={()=>toggleEvent(e.id)} style={{width:20,height:20,borderRadius:5,flexShrink:0,border:`2px solid ${e.done?accent:id}`,background:e.done?accent:'transparent',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'.2s'}}>
             {e.done&&<svg width="11" height="11" viewBox="0 0 10 10"><polyline points="1,5 4,8 9,2" stroke={isDark?'#000':'#fff'} strokeWidth="2.5" fill="none"/></svg>}
@@ -242,7 +277,7 @@ export default function PlannerTab({accent,label,user}:{accent:string;label:stri
   };
 
   /* ─── VIEWS ─── */
-  const TodayView = () => (
+  const renderTodayView = () => (
     <div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:14}}>
         {[{icon:'✅',val:`${doneToday}/${todayEvs.length}`,label:'Tasks',col:accent},{icon:'🔥',val:`${openToday}`,label:'Open',col:openToday>0?'#f07033':'#00c97a'},{icon:'📋',val:`${doneSubs}/${allSubs}`,label:'Steps',col:accent},{icon:'⏱',val:fmtMins(todayEvs.reduce((a,e)=>a+(e.estimatedMins||0),0))||'0m',label:'Planned',col:t2}].map((s,i)=>(
@@ -277,13 +312,13 @@ export default function PlannerTab({accent,label,user}:{accent:string;label:stri
       </div>
 
       {todayEvs.length===0?<div style={{textAlign:'center',padding:'34px 20px',color:t3}}><div style={{fontSize:'2rem',marginBottom:10}}>☀️</div><div style={{fontSize:'.9rem',color:t2,marginBottom:10}}>Nothing planned yet</div><button onClick={()=>setView('ai')} style={{padding:'8px 20px',background:accent,border:'none',borderRadius:8,color:'#000',fontWeight:700,cursor:'pointer',fontFamily:'inherit',fontSize:'.84rem'}}>✦ Generate Plan</button></div>
-        :<>{todayEvs.map(e=><EventCard key={e.id} e={e}/>)}</>}
+        :<>{todayEvs.map(e=>renderEventCard(e))}</>}
 
-      {futureEvs.length>0&&<div style={{marginTop:18}}><div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}><div style={{fontSize:'.68rem',fontWeight:700,color:t3,textTransform:'uppercase',letterSpacing:'.12em'}}>Upcoming</div><div style={{flex:1,height:1,background:br}}/><button onClick={()=>setView('schedule')} style={{background:'none',border:'none',color:accent,fontSize:'.74rem',cursor:'pointer',fontFamily:'inherit',fontWeight:600}}>All →</button></div>{futureEvs.slice(0,3).map(e=><EventCard key={e.id} e={e} compact/>)}</div>}
+      {futureEvs.length>0&&<div style={{marginTop:18}}><div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}><div style={{fontSize:'.68rem',fontWeight:700,color:t3,textTransform:'uppercase',letterSpacing:'.12em'}}>Upcoming</div><div style={{flex:1,height:1,background:br}}/><button onClick={()=>setView('schedule')} style={{background:'none',border:'none',color:accent,fontSize:'.74rem',cursor:'pointer',fontFamily:'inherit',fontWeight:600}}>All →</button></div>{futureEvs.slice(0,3).map(e=>renderEventCard(e, true))}</div>}
     </div>
   );
 
-  const ScheduleView = () => (
+  const renderScheduleView = () => (
     <div>
       <div style={{background:sf,border:`1px solid ${br}`,borderRadius:12,padding:16,marginBottom:18,boxShadow:sh}}>
         <div style={{fontSize:'.76rem',fontWeight:700,color:accent,textTransform:'uppercase',letterSpacing:'.1em',marginBottom:12}}>⚡ Visual Time-Blocking — Customizable Activity Blocks</div>
@@ -297,12 +332,12 @@ export default function PlannerTab({accent,label,user}:{accent:string;label:stri
       </div>
       {[['Today',todayEvs],['Upcoming',futureEvs],['Past',pastEvs]].map(([title,items])=>{
         const evs=items as RichEvent[]; if(!evs.length)return null;
-        return <div key={String(title)} style={{marginBottom:18}}><div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}><div style={{fontSize:'.68rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'.12em',color:t3}}>{String(title)}</div><div style={{flex:1,height:1,background:br}}/><span style={{fontSize:'.68rem',color:t3}}>{evs.length}</span></div>{evs.map(e=><EventCard key={e.id} e={e}/>)}</div>;
+        return <div key={String(title)} style={{marginBottom:18}}><div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}><div style={{fontSize:'.68rem',fontWeight:700,textTransform:'uppercase',letterSpacing:'.12em',color:t3}}>{String(title)}</div><div style={{flex:1,height:1,background:br}}/><span style={{fontSize:'.68rem',color:t3}}>{evs.length}</span></div>{evs.map(e=>renderEventCard(e))}</div>;
       })}
     </div>
   );
 
-  const InboxView = () => (
+  const renderInboxView = () => (
     <div>
       <div style={{background:sf,border:`1px solid ${br}`,borderRadius:12,padding:18,marginBottom:18,boxShadow:sh}}>
         <div style={{fontSize:'.76rem',fontWeight:700,color:accent,textTransform:'uppercase',letterSpacing:'.1em',marginBottom:4}}>📥 Quick-Capture Inbox</div>
@@ -329,7 +364,7 @@ export default function PlannerTab({accent,label,user}:{accent:string;label:stri
     </div>
   );
 
-  const HabitsView = () => (
+  const renderHabitsView = () => (
     <div>
       <div style={{background:sf,border:`1px solid ${br}`,borderRadius:12,padding:16,marginBottom:18,boxShadow:sh}}>
         <div style={{fontSize:'.76rem',fontWeight:700,color:accent,textTransform:'uppercase',letterSpacing:'.1em',marginBottom:12}}>🌱 Habit & Goal Tracking — Add New Habit</div>
@@ -345,7 +380,7 @@ export default function PlannerTab({accent,label,user}:{accent:string;label:stri
       {habits.length===0?<div style={{textAlign:'center',padding:'28px 0',color:t3}}><div style={{fontSize:'2rem',marginBottom:8}}>🌱</div><div>Add your first habit above</div></div>
         :habits.map(h=>{
           const tod=h.log.includes(todayStr);
-          return <div key={h.id} style={{background:sf,border:`1px solid ${br}`,borderLeft:`3px solid ${h.color}`,borderRadius:10,padding:'13px 15px',marginBottom:9,boxShadow:sh}}>
+          return <div key={h.id} style={{background:sf,borderTop:`1px solid ${br}`,borderRight:`1px solid ${br}`,borderBottom:`1px solid ${br}`,borderLeft:`3px solid ${h.color}`,borderRadius:10,padding:'13px 15px',marginBottom:9,boxShadow:sh}}>
             <div style={{display:'flex',alignItems:'center',gap:11,marginBottom:10}}>
               <div onClick={()=>logHabit(h.id,todayStr)} style={{width:36,height:36,borderRadius:9,border:`2px solid ${tod?h.color:id}`,background:tod?`${h.color}22`:'transparent',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:'1.25rem',transition:'.2s',flexShrink:0}}>{h.emoji}</div>
               <div style={{flex:1}}><div style={{fontWeight:600,color:t,fontSize:'.9rem'}}>{h.name}</div><div style={{fontSize:'.72rem',color:h.color,fontWeight:700}}>🔥 {h.streak} day streak</div></div>
@@ -362,7 +397,12 @@ export default function PlannerTab({accent,label,user}:{accent:string;label:stri
     </div>
   );
 
-  const GoalsView = () => (
+  const renderGoalsView = () => {
+    if (selectedCanvasGoal) {
+      const g = goals.find(x => x.id === selectedCanvasGoal);
+      return <CanvasView goalId={selectedCanvasGoal} goalTitle={g?.title} onBack={() => setSelectedCanvasGoal(null)} accent={accent} isDark={isDark} />;
+    }
+    return (
     <div>
       <div style={{background:sf,border:`1px solid ${br}`,borderRadius:12,padding:16,marginBottom:18,boxShadow:sh}}>
         <div style={{fontSize:'.76rem',fontWeight:700,color:accent,textTransform:'uppercase',letterSpacing:'.1em',marginBottom:12}}>🎯 Yearly · Quarterly · Monthly Goals</div>
@@ -378,7 +418,7 @@ export default function PlannerTab({accent,label,user}:{accent:string;label:stri
         :(['yearly','quarterly','monthly'] as const).map(period=>{
           const gl=goals.filter(g=>g.period===period); if(!gl.length)return null;
           return <div key={period} style={{marginBottom:20}}><div style={{fontSize:'.68rem',fontWeight:700,color:t3,textTransform:'uppercase',letterSpacing:'.12em',marginBottom:10}}>{period} goals</div>
-            {gl.map(g=>{ const pct=Math.min(100,Math.round((g.progress/g.target)*100)); return <div key={g.id} style={{background:sf,border:`1px solid ${br}`,borderLeft:`3px solid ${g.color}`,borderRadius:10,padding:'13px 15px',marginBottom:8,boxShadow:sh}}>
+            {gl.map(g=>{ const pct=Math.min(100,Math.round((g.progress/g.target)*100)); return <div key={g.id} style={{background:sf,borderTop:`1px solid ${br}`,borderRight:`1px solid ${br}`,borderBottom:`1px solid ${br}`,borderLeft:`3px solid ${g.color}`,borderRadius:10,padding:'13px 15px',marginBottom:8,boxShadow:sh,cursor:'pointer',transition:'.2s'}} onClick={(e)=>{ if((e.target as any).tagName!=='BUTTON') setSelectedCanvasGoal(g.id); }}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:7}}>
                 <span style={{fontWeight:600,color:t,fontSize:'.9rem'}}>{g.title}</span>
                 <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -393,9 +433,10 @@ export default function PlannerTab({accent,label,user}:{accent:string;label:stri
           </div>;
         })}
     </div>
-  );
+    );
+  };
 
-  const AIView = () => (
+  const renderAIView = () => (
     <div>
       <div style={{background:sf,border:`1px solid ${br}`,borderRadius:14,padding:20,marginBottom:18,boxShadow:sh,position:'relative',overflow:'hidden'}}>
         <div style={{position:'absolute',top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,transparent,${accent},transparent)`,opacity:.5}}/>
@@ -408,7 +449,7 @@ export default function PlannerTab({accent,label,user}:{accent:string;label:stri
         </div>
         <div style={{marginBottom:16}}><div style={{fontSize:'.64rem',color:t3,marginBottom:7,textTransform:'uppercase',letterSpacing:'.08em'}}>Quick ideas</div><div style={{display:'flex',gap:6,flexWrap:'wrap'}}>{['Study session for exam','Weekly project review','Deep work block','Morning routine','Research & report','Prepare presentation'].map(q=><button key={q} onClick={()=>setAiGoal(q)} style={{padding:'4px 11px',background:s2,border:`1px solid ${br}`,borderRadius:20,color:t2,fontSize:'.73rem',cursor:'pointer',fontFamily:'inherit'}}>{q}</button>)}</div></div>
         <button onClick={generatePlan} disabled={aiLoading||!aiGoal.trim()} style={{padding:'10px 24px',background:aiLoading||!aiGoal.trim()?s2:accent,border:'none',borderRadius:9,color:aiLoading||!aiGoal.trim()?t3:'#000',fontWeight:800,cursor:aiLoading||!aiGoal.trim()?'not-allowed':'pointer',fontFamily:'inherit',fontSize:'.88rem',display:'flex',alignItems:'center',gap:10,transition:'.2s'}}>
-          {aiLoading?(<><span style={{width:15,height:15,border:`2px solid ${t3}44`,borderTopColor:t3,borderRadius:'50%',display:'inline-block',animation:'spin .7s linear infinite'}}/> Generating…</>):'✦ Generate AI Plan'}
+          {aiLoading?(<><span style={{width:15,height:15,borderRight:`2px solid ${t3}44`,borderBottom:`2px solid ${t3}44`,borderLeft:`2px solid ${t3}44`,borderTop:`2px solid ${t3}`,borderRadius:'50%',display:'inline-block',animation:'spin .7s linear infinite'}}/> Generating…</>):'✦ Generate AI Plan'}
         </button>
         {aiError&&<div style={{marginTop:9,padding:'8px 12px',background:'rgba(232,51,74,.07)',border:'1px solid rgba(232,51,74,.18)',borderRadius:8}}><p style={{color:'#e8334a',fontSize:'.81rem',margin:0}}>⚠ {aiError}</p></div>}
       </div>
@@ -417,7 +458,7 @@ export default function PlannerTab({accent,label,user}:{accent:string;label:stri
         <div>
           <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}><div style={{fontSize:'.74rem',fontWeight:700,color:accent,textTransform:'uppercase',letterSpacing:'.1em'}}>✦ Your Plan ({aiPlans.length})</div><div style={{flex:1,height:1,background:br}}/>{aiPlans.length>1&&<button onClick={async()=>{for(let i=0;i<aiPlans.length;i++)await savePlan(aiPlans[i],i);}} style={{padding:'5px 14px',background:accent,border:'none',borderRadius:8,color:'#000',fontWeight:700,fontSize:'.78rem',cursor:'pointer',fontFamily:'inherit'}}>+ Save All</button>}</div>
           {aiPlans.map((plan,i)=>{ const pc=PRI[plan.priority as keyof typeof PRI]||PRI.medium; const tm=plan.subtasks.reduce((a,s)=>a+s.estimatedMins,0)||plan.estimatedMins; return (
-            <div key={i} style={{background:sf,border:`1px solid ${br}`,borderLeft:`3px solid ${pc.color}`,borderRadius:10,marginBottom:12,overflow:'hidden',boxShadow:sh}}>
+            <div key={i} style={{background:sf,borderTop:`1px solid ${br}`,borderRight:`1px solid ${br}`,borderBottom:`1px solid ${br}`,borderLeft:`3px solid ${pc.color}`,borderRadius:10,marginBottom:12,overflow:'hidden',boxShadow:sh}}>
               <div style={{padding:'7px 15px',background:pb,borderBottom:`1px solid ${br}`,display:'flex',alignItems:'center',gap:7,flexWrap:'wrap'}}>
                 <span style={{fontSize:'.62rem',fontWeight:800,color:accent,textTransform:'uppercase',letterSpacing:'.1em'}}>✦ AI Plan</span>
                 <span style={{fontSize:'.67rem',padding:'2px 7px',borderRadius:12,background:pc.bg,color:pc.color,fontWeight:700}}>{pc.icon} {pc.label}</span>
@@ -437,7 +478,7 @@ export default function PlannerTab({accent,label,user}:{accent:string;label:stri
         </div>
       )}
 
-      {events.length>0&&aiPlans.length===0&&!aiLoading&&<div style={{marginTop:4}}><div style={{display:'flex',alignItems:'center',gap:10,marginBottom:11}}><div style={{fontSize:'.7rem',fontWeight:700,color:t3,textTransform:'uppercase',letterSpacing:'.1em'}}>Saved plans</div><div style={{flex:1,height:1,background:br}}/><button onClick={()=>setView('schedule')} style={{background:'none',border:'none',color:accent,fontSize:'.74rem',cursor:'pointer',fontFamily:'inherit',fontWeight:600}}>See all →</button></div>{events.slice(0,3).map(e=><EventCard key={e.id} e={e}/>)}</div>}
+      {events.length>0&&aiPlans.length===0&&!aiLoading&&<div style={{marginTop:4}}><div style={{display:'flex',alignItems:'center',gap:10,marginBottom:11}}><div style={{fontSize:'.7rem',fontWeight:700,color:t3,textTransform:'uppercase',letterSpacing:'.1em'}}>Saved plans</div><div style={{flex:1,height:1,background:br}}/><button onClick={()=>setView('schedule')} style={{background:'none',border:'none',color:accent,fontSize:'.74rem',cursor:'pointer',fontFamily:'inherit',fontWeight:600}}>See all →</button></div>{events.slice(0,3).map(e=>renderEventCard(e))}</div>}
     </div>
   );
 
@@ -511,15 +552,15 @@ export default function PlannerTab({accent,label,user}:{accent:string;label:stri
         </div>
       )}
 
-      {view==='today'     && <TodayView/>}
-      {view==='calendar'  && <CalendarView events={events} accent={accent} isDark={isDark} onDayClick={(date)=>{ setNewEv(p=>({...p,date})); setView('today'); }}/> }
-      {view==='week'      && <WeekView    events={events} accent={accent} isDark={isDark} onDayClick={(date)=>{ setNewEv(p=>({...p,date})); setView('today'); }}/> }
-      {view==='gantt'     && <GanttView   events={events} accent={accent} isDark={isDark}/>}
-      {view==='schedule'  && <ScheduleView/>}
-      {view==='ai'        && <AIView/>}
-      {view==='habits'    && <HabitsView/>}
-      {view==='goals'     && <GoalsView/>}
-      {view==='inbox'     && <InboxView/>}
+      {view==='today'     && renderTodayView()}
+      {view==='calendar'  && <CalendarView events={combinedEvents} accent={accent} isDark={isDark} onDayClick={(date)=>{ setNewEv(p=>({...p,date})); setView('today'); }}/> }
+      {view==='week'      && <WeekView     events={combinedEvents} accent={accent} isDark={isDark} onDayClick={(date)=>{ setNewEv(p=>({...p,date})); setView('today'); }}/> }
+      {view==='gantt'     && <GanttView    events={combinedEvents} accent={accent} isDark={isDark}/>}
+      {view==='schedule'  && renderScheduleView()}
+      {view==='ai'        && renderAIView()}
+      {view==='habits'    && renderHabitsView()}
+      {view==='goals'     && renderGoalsView()}
+      {view==='inbox'     && renderInboxView()}
       {view==='templates' && <TemplatesView accent={accent} isDark={isDark} onApply={applyTemplate}/>}
       {view==='personal'  && <PersonalView  accent={accent} isDark={isDark}/>}
     </div>
