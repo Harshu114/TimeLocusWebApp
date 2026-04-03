@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/habits")
@@ -27,6 +26,7 @@ public class HabitController {
     }
 
     @PostMapping
+    @SuppressWarnings("null")
     public ResponseEntity<HabitDTO> create(
             @AuthenticationPrincipal User user,
             @Valid @RequestBody CreateHabitRequest req) {
@@ -35,6 +35,7 @@ public class HabitController {
     }
 
     @PatchMapping("/{id}/complete")
+    @SuppressWarnings("null")
     public ResponseEntity<HabitDTO> complete(
             @AuthenticationPrincipal User user,
             @PathVariable String id,
@@ -51,6 +52,7 @@ public class HabitController {
     }
 
     @DeleteMapping("/{id}")
+    @SuppressWarnings("null")
     public ResponseEntity<ApiResponse<String>> delete(
             @AuthenticationPrincipal User user,
             @PathVariable String id) {

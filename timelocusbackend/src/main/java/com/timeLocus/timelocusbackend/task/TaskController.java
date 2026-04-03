@@ -31,6 +31,7 @@ public class TaskController {
 
     // POST /tasks — create a new task
     @PostMapping
+    @SuppressWarnings("null")
     public ResponseEntity<TaskDTO> create(
             @AuthenticationPrincipal User user,
             @Valid @RequestBody CreateTaskRequest req) {
@@ -44,6 +45,7 @@ public class TaskController {
 
     // PATCH /tasks/{id}/toggle — flip done/undone
     @PatchMapping("/{id}/toggle")
+    @SuppressWarnings("null")
     public ResponseEntity<TaskDTO> toggle(
             @AuthenticationPrincipal User user,
             @PathVariable String id) {
@@ -55,6 +57,7 @@ public class TaskController {
 
     // PUT /tasks/{id} — update title or priority
     @PutMapping("/{id}")
+    @SuppressWarnings("null")
     public ResponseEntity<TaskDTO> update(
             @AuthenticationPrincipal User user,
             @PathVariable String id,
@@ -68,6 +71,7 @@ public class TaskController {
 
     // DELETE /tasks/{id}
     @DeleteMapping("/{id}")
+    @SuppressWarnings("null")
     public ResponseEntity<ApiResponse<String>> delete(
             @AuthenticationPrincipal User user,
             @PathVariable String id) {

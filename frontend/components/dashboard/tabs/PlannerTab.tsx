@@ -249,7 +249,7 @@ export default function PlannerTab({ accent, label, user }: { accent: string; la
               {e.estimatedMins && <span style={{ fontSize: '.7rem', color: t3 }}>⏱ {fmtMins(e.estimatedMins)}</span>}
               <span style={{ fontSize: '.65rem', padding: '1px 6px', borderRadius: 12, background: `${tc}18`, color: tc, fontWeight: 600 }}>{e.eventType}</span>
               <span style={{ fontSize: '.65rem', padding: '1px 6px', borderRadius: 12, background: pc.bg, color: pc.color, fontWeight: 700 }}>{pc.icon} {pc.label}</span>
-              <span style={{ fontSize: '.65rem', color: ec.color, title: ec.desc }}>{ec.icon}</span>
+              <span style={{ fontSize: '.65rem', color: ec.color }} title={ec.desc}>{ec.icon}</span>
               {subs.length > 0 && <span style={{ fontSize: '.68rem', color: prog === 100 ? '#00c97a' : t3 }}>{done}/{subs.length} {prog === 100 ? '✓' : ''}</span>}
             </div>
             {subs.length > 0 && <div style={{ marginTop: 4, height: 3, background: isDark ? 'rgba(255,255,255,.06)' : 'rgba(100,130,200,.10)', borderRadius: 2, overflow: 'hidden' }}><div style={{ height: '100%', width: `${prog}%`, background: prog === 100 ? '#00c97a' : accent, borderRadius: 2, transition: '.4s' }} /></div>}

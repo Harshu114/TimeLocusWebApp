@@ -29,6 +29,7 @@ public class JournalController {
     }
 
     @PostMapping
+    @SuppressWarnings("null")
     public ResponseEntity<JournalDTO> create(
             @AuthenticationPrincipal User user,
             @Valid @RequestBody CreateJournalRequest req) {
@@ -42,6 +43,7 @@ public class JournalController {
     }
 
     @DeleteMapping("/{id}")
+    @SuppressWarnings("null")
     public ResponseEntity<ApiResponse<String>> delete(
             @AuthenticationPrincipal User user,
             @PathVariable String id) {

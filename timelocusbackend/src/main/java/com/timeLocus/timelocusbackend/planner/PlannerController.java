@@ -56,6 +56,7 @@ public class PlannerController {
 
     // POST /planner
     @PostMapping
+    @SuppressWarnings("null")
     public ResponseEntity<PlannerEventDTO> create(
             @AuthenticationPrincipal User user,
             @Valid @RequestBody CreateEventRequest req) {
@@ -85,6 +86,7 @@ public class PlannerController {
 
     // PATCH /planner/{id}/toggle — toggle event done/undone
     @PatchMapping("/{id}/toggle")
+    @SuppressWarnings("null")
     public ResponseEntity<PlannerEventDTO> toggle(
             @AuthenticationPrincipal User user,
             @PathVariable String id) {
@@ -96,6 +98,7 @@ public class PlannerController {
 
     // PATCH /planner/{id}/subtask/{subtaskId} — toggle individual subtask
     @PatchMapping("/{id}/subtask/{subtaskId}")
+    @SuppressWarnings("null")
     public ResponseEntity<PlannerEventDTO> toggleSubtask(
             @AuthenticationPrincipal User user,
             @PathVariable String id,
@@ -127,6 +130,7 @@ public class PlannerController {
 
     // PATCH /planner/{id} — update notes / priority / other fields
     @PatchMapping("/{id}")
+    @SuppressWarnings("null")
     public ResponseEntity<PlannerEventDTO> update(
             @AuthenticationPrincipal User user,
             @PathVariable String id,
@@ -141,6 +145,7 @@ public class PlannerController {
 
     // DELETE /planner/{id}
     @DeleteMapping("/{id}")
+    @SuppressWarnings("null")
     public ResponseEntity<ApiResponse<String>> delete(
             @AuthenticationPrincipal User user,
             @PathVariable String id) {

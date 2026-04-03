@@ -3,13 +3,13 @@ import { NextRequest, NextResponse } from 'next/server';
 // This file proxies POST /api/auth/* → Spring Boot :8080
 // Handles: /api/auth/login, /api/auth/register, /api/auth/forgot-password etc.
 export async function POST(req: NextRequest) {
-  const url   = new URL(req.url);
-  const path  = url.pathname; // e.g. /api/auth/login
-  const body  = await req.text();
+  const url = new URL(req.url);
+  const path = url.pathname; // e.g. /api/auth/login
+  const body = await req.text();
 
   try {
     const res = await fetch(`http://localhost:8080${path}`, {
-      method:  'POST',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body,
       cache: 'no-store',
@@ -25,9 +25,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const url  = new URL(req.url);
+  const url = new URL(req.url);
   const path = url.pathname;
-  const qs   = url.search;
+  const qs = url.search;
 
   try {
     const res = await fetch(`http://localhost:8080${path}${qs}`, {

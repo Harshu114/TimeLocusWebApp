@@ -80,6 +80,7 @@ public class TimeTrackerService {
 
     // ── Create manual time entry ──────────────────────────────────────────────
     @Transactional
+    @SuppressWarnings("null")
     public TimeEntryDTO createEntry(User user, CreateEntryRequest req) {
         LocalDate date  = req.date()      != null ? LocalDate.parse(req.date(), DATE_FMT)      : LocalDate.now();
         LocalTime start = req.startTime() != null ? LocalTime.parse(req.startTime(), TIME_FMT) : null;
@@ -101,6 +102,7 @@ public class TimeTrackerService {
 
     // ── Start live timer — saves entry with only startTime ───────────────────
     @Transactional
+    @SuppressWarnings("null")
     public TimeEntryDTO startTimer(User user, String task, String category) {
         TimeEntry entry = TimeEntry.builder()
                 .user(user)
@@ -115,6 +117,7 @@ public class TimeTrackerService {
 
     // ── Stop live timer — fills endTime and calculates duration ──────────────
     @Transactional
+    @SuppressWarnings("null")
     public TimeEntryDTO stopTimer(User user, String id) {
         TimeEntry entry = repo.findByIdAndUser(id, user)
                 .orElseThrow(() -> new RuntimeException("Entry not found"));
@@ -128,6 +131,7 @@ public class TimeTrackerService {
 
     // ── Update an existing entry ──────────────────────────────────────────────
     @Transactional
+    @SuppressWarnings("null")
     public TimeEntryDTO updateEntry(User user, String id, CreateEntryRequest req) {
         TimeEntry entry = repo.findByIdAndUser(id, user)
                 .orElseThrow(() -> new RuntimeException("Entry not found"));
@@ -142,6 +146,7 @@ public class TimeTrackerService {
 
     // ── Delete an entry ───────────────────────────────────────────────────────
     @Transactional
+    @SuppressWarnings("null")
     public void deleteEntry(User user, String id) {
         TimeEntry entry = repo.findByIdAndUser(id, user)
                 .orElseThrow(() -> new RuntimeException("Entry not found"));
