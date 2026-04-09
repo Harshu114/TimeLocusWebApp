@@ -23,7 +23,7 @@ export function AuthInput({ label, rightElement, ...props }: AuthInputProps) {
         .ai-wrap { position:relative; }
         .ai-input {
           width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);
-          padding:12px 15px;border-radius:4px;color:#fff;font-family:'Exo 2',sans-serif;
+          padding:12px 15px;border-radius:4px;color:#fff;font-family:'DM Sans',sans-serif;
           font-size:.9rem;font-weight:500;outline:none;transition:.22s;box-sizing:border-box;
         }
         .ai-input::placeholder { color:rgba(255,255,255,.18); }
@@ -86,7 +86,7 @@ export function AuthButton({
           width:100%;position:relative;overflow:hidden;
           background:linear-gradient(105deg,#00b8d4,#8c3cff);
           border:none;padding:15px;border-radius:4px;color:#fff;
-          font-family:'Orbitron',monospace;font-weight:600;font-size:.72rem;
+          font-family:'DM Sans',sans-serif;font-weight:600;font-size:.72rem;
           letter-spacing:.18em;text-transform:uppercase;cursor:pointer;
           transition:.2s;box-shadow:0 0 30px rgba(0,184,212,.2);margin-top:6px;
         }

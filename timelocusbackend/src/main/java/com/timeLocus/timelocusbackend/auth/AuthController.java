@@ -66,4 +66,12 @@ public class AuthController {
     public ResponseEntity<AuthResponse> refresh(@RequestBody RefreshRequest req) {
         return ResponseEntity.ok(authService.refreshToken(req.refreshToken()));
     }
+
+    // PUT /auth/theme — update user theme preferences
+    @PutMapping("/theme")
+    public ResponseEntity<AuthResponse> updateTheme(
+            @RequestHeader("Authorization") String token,
+            @Valid @RequestBody UpdateThemeRequest req) {
+        return ResponseEntity.ok(authService.updateTheme(token, req));
+    }
 }

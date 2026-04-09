@@ -38,7 +38,7 @@ public class AuthService {
 
     // ── Check user exists ─────────────────────────────────────────────────────
     public CheckUserResponse checkUser(String identifier) {
-        return userRepository.findByEmail(identifier.toLowerCase().trim())
+        return userRepository.findByNormalizedEmail(identifier)
                 .map(u -> new CheckUserResponse(true, u.getFirstName()))
                 .orElse(new CheckUserResponse(false, null));
     }
@@ -49,7 +49,7 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(
                         req.email().toLowerCase(), req.password())
         );
-        User user = userRepository.findByEmail(req.email().toLowerCase())
+        User user = userRepository.findByNormalizedEmail(req.email())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return buildAuthResponse(user);
     }
@@ -57,9 +57,9 @@ public class AuthService {
     // ── Register ──────────────────────────────────────────────────────────────
     @Transactional
     public AuthResponse register(RegisterRequest req) {
-        String email = req.email().toLowerCase();
+        String email = req.email().toLowerCase().trim();
         System.out.println("Registering user with email: " + email);
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByNormalizedEmail(email)) {
             System.out.println("Email already exists: " + email);
             throw new IllegalArgumentException("Email already registered.");
         }
@@ -85,6 +85,7 @@ public class AuthService {
                 req.age(),
                 req.gender(),
                 req.profession(),
+                req.aim(),
                 resolvedType,
                 null, // resetPasswordToken
                 null  // resetTokenExpiry
@@ -101,7 +102,7 @@ public class AuthService {
     // ── Forgot password ───────────────────────────────────────────────────────
     @Transactional
     public void sendPasswordResetEmail(String email) {
-        userRepository.findByEmail(email.toLowerCase().trim()).ifPresent(user -> {
+        userRepository.findByNormalizedEmail(email).ifPresent(user -> {
             String token = UUID.randomUUID().toString();
             user.setResetPasswordToken(token);
             user.setResetTokenExpiry(LocalDateTime.now().plusHours(1));
@@ -131,12 +132,34 @@ public class AuthService {
     // ── Refresh token ─────────────────────────────────────────────────────────
     public AuthResponse refreshToken(String refreshToken) {
         String email = jwtService.extractUsername(refreshToken);
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByNormalizedEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         if (!jwtService.isTokenValid(refreshToken, user)) {
             throw new IllegalArgumentException("Invalid refresh token.");
         }
         return buildAuthResponse(user);
+    }
+
+    // ── Update theme ──────────────────────────────────────────────────────────
+    @Transactional
+    public AuthResponse updateTheme(String authHeader, UpdateThemeRequest req) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = jwtService.extractUsername(token);
+        User user = userRepository.findByNormalizedEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        if (req.theme() != null && (req.theme().equals("light") || req.theme().equals("dark"))) {
+            user.setTheme(req.theme());
+        }
+        if (req.themeColor() != null && isValidThemeColor(req.themeColor())) {
+            user.setThemeColor(req.themeColor());
+        }
+        userRepository.save(user);
+        return buildAuthResponse(user);
+    }
+
+    private boolean isValidThemeColor(String color) {
+        return color.matches("^(blue|purple|green|orange|pink|teal)$");
     }
 
     // ── Build auth response ───────────────────────────────────────────────────
@@ -152,7 +175,10 @@ public class AuthService {
                 user.getFirstName(),
                 user.getLastName(),
                 user.getEmail(),
-                user.getUserType().name().toLowerCase()  // ← THE FIX: "STUDENT" → "student"
+                user.getUserType().name().toLowerCase(),  // ← THE FIX: "STUDENT" → "student"
+                user.getAim(),
+                user.getTheme(),
+                user.getThemeColor()
         );
         return new AuthResponse(token, refreshToken, userResp);
     }

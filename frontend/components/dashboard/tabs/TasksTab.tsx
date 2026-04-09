@@ -142,7 +142,7 @@ export function TasksTab({ accent }: { accent: string }) {
           onClick={add}
           style={{
             padding:'14px 24px', background: accent, border:'none', borderRadius:8, color:'#000', fontWeight:700, cursor:'pointer',
-            fontFamily:'Orbitron,monospace', fontSize:'.75rem', letterSpacing:'.05em',
+            fontFamily:"'DM Sans', sans-serif", fontSize:'.75rem', letterSpacing:'.05em',
             boxShadow:`0 0 15px rgba(${accentR},.3)`,
           }}
         >+ Add</button>

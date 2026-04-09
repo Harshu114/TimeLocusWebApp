@@ -9,6 +9,7 @@ export interface User {
   lastName: string;
   email: string;
   userType: UserType;
+  aim?: string;
 }
 
 export interface TimeEntry {

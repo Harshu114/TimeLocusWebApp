@@ -36,6 +36,15 @@ public class User implements UserDetails {
     private Integer age;
     private String gender;
     private String profession;
+    
+    @Column(columnDefinition = "TEXT")
+    private String aim;
+    
+    @Column(name = "theme", columnDefinition = "VARCHAR(20) DEFAULT 'light'")
+    private String theme;
+    
+    @Column(name = "theme_color", columnDefinition = "VARCHAR(20) DEFAULT 'blue'")
+    private String themeColor;
 
     // FIX: Added columnDefinition so MySQL creates the column with a DEFAULT value.
     // This prevents "Field 'created_at' doesn't have a default value" (SQL Error 1364).
@@ -57,7 +66,7 @@ public class User implements UserDetails {
     public User() {}
 
     public User(String id, String firstName, String lastName, String email, String password,
-                Integer age, String gender, String profession, UserType userType,
+                Integer age, String gender, String profession, String aim, UserType userType,
                 String resetPasswordToken, LocalDateTime resetTokenExpiry) {
         this.id = id;
         this.firstName = firstName;
@@ -67,9 +76,12 @@ public class User implements UserDetails {
         this.age = age;
         this.gender = gender;
         this.profession = profession;
+        this.aim = aim;
         this.userType = userType;
         this.resetPasswordToken = resetPasswordToken;
         this.resetTokenExpiry = resetTokenExpiry;
+        this.theme = "light";
+        this.themeColor = "blue";
     }
 
     // ── JPA lifecycle callbacks ───────────────────────────────────────────────
@@ -109,6 +121,15 @@ public class User implements UserDetails {
 
     public String getProfession() { return profession; }
     public void setProfession(String profession) { this.profession = profession; }
+
+    public String getAim() { return aim; }
+    public void setAim(String aim) { this.aim = aim; }
+
+    public String getTheme() { return theme; }
+    public void setTheme(String theme) { this.theme = theme; }
+
+    public String getThemeColor() { return themeColor; }
+    public void setThemeColor(String themeColor) { this.themeColor = themeColor; }
 
     public UserType getUserType() { return userType; }
     public void setUserType(UserType userType) { this.userType = userType; }

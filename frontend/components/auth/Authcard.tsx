@@ -16,14 +16,14 @@ export default function AuthCard({ children, maxWidth = 420 }: AuthCardProps) {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Exo+2:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Inter:wght@300;400;500;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #080c14; }
 
         .ac-root {
           min-height: 100vh; width: 100%; display: flex; align-items: center;
           justify-content: center; background: #080c14; position: relative;
-          overflow: hidden; font-family: 'Exo 2', sans-serif; padding: 24px;
+          overflow: hidden; font-family: 'DM Sans', sans-serif; padding: 24px;
         }
         .ac-bg { position:absolute;inset:0;pointer-events:none;
           background:radial-gradient(ellipse 80% 60% at 20% 20%,rgba(0,220,255,.05) 0%,transparent 60%),
@@ -59,7 +59,7 @@ export default function AuthCard({ children, maxWidth = 420 }: AuthCardProps) {
         .ac-c-br { bottom:-1px;right:-1px;border-bottom:2px solid #00dcff;border-right:2px solid #00dcff; }
 
         .ac-logo { display:flex;align-items:center;gap:10px;margin-bottom:28px; }
-        .ac-logo-name { font-family:'Orbitron',monospace;font-weight:700;font-size:1.05rem;
+        .ac-logo-name { font-family:'Sora',sans-serif;font-weight:700;font-size:1.05rem;
           letter-spacing:.18em;color:#00dcff;text-shadow:0 0 24px rgba(0,220,255,.55); }
       `}</style>
 

@@ -131,13 +131,32 @@ export default function DashboardTab({ user, accent }: Props) {
       `}</style>
       {/* Greeting */}
       <div>
-        <h2 style={{ fontFamily:'Orbitron,monospace', fontSize:'1.5rem', fontWeight:700, color:text, marginBottom:6, textShadow:`0 0 30px rgba(${accentR},.15)` }}>
+        <h2 style={{ fontFamily:"'DM Sans', sans-serif", fontSize:'1.5rem', fontWeight:700, color:text, marginBottom:6, textShadow:`0 0 30px rgba(${accentR},.15)` }}>
           Good {greeting}, {user.firstName}! 👋
         </h2>
         <p style={{ color:text2, fontSize:'.9rem' }}>
           {now.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
         </p>
       </div>
+
+      {/* User Aim Card */}
+      {user.aim && (
+        <div style={{
+          padding:'16px 18px',
+          background:`linear-gradient(135deg, rgba(${accentR},.06), rgba(${accentR},.01))`,
+          border:`1px solid rgba(${accentR},.15)`,
+          borderRadius:8,
+          position:'relative'
+        }}>
+          <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
+            <span style={{ fontSize:'1.4rem', marginTop:'2px' }}>🎯</span>
+            <div style={{ flex:1 }}>
+              <p style={{ fontSize:'.75rem', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.08em', color:`rgba(${accentR},0.6)`, marginBottom:4 }}>Your Goal</p>
+              <p style={{ color:text, fontSize:'.95rem', lineHeight:1.5 }}>{user.aim}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Live tracker */}
       <div style={{
@@ -152,10 +171,10 @@ export default function DashboardTab({ user, accent }: Props) {
           placeholder="What are you working on right now?" disabled={tracking}
           style={{ flex:1, background:'transparent', border:'none', color:text, fontFamily:'inherit', fontSize:'.92rem', outline:'none' }} />
         {tracking && (
-          <span style={{ fontFamily:'Orbitron,monospace', fontWeight:700, fontSize:'1.1rem', color:accent, textShadow:`0 0 10px ${accent}` }}>{fmtSecs(trackSecs)}</span>
+          <span style={{ fontFamily:"'DM Sans', sans-serif", fontWeight:700, fontSize:'1.1rem', color:accent, textShadow:`0 0 10px ${accent}` }}>{fmtSecs(trackSecs)}</span>
         )}
         <button onClick={tracking ? stopTimer : startTimer} style={{
-          padding:'10px 22px', borderRadius:6, cursor:'pointer', fontFamily:'Orbitron,monospace', fontWeight:600, fontSize:'.75rem', letterSpacing:'.05em',
+          padding:'10px 22px', borderRadius:6, cursor:'pointer', fontFamily:"'DM Sans', sans-serif", fontWeight:600, fontSize:'.75rem', letterSpacing:'.05em',
           background: tracking ? 'rgba(255,60,80,.15)' : accent,
           color: tracking ? '#ff4060' : '#000',
           border: tracking ? '1px solid rgba(255,60,80,.4)' : 'none',
@@ -182,7 +201,7 @@ export default function DashboardTab({ user, accent }: Props) {
             <div style={{ position:'absolute', top:0, left:0, right:0, height:1, background:`linear-gradient(90deg, transparent, rgba(${accentR},.4), transparent)` }} />
             <div style={{ position:'absolute', top:-1, left:-1, width:10, height:10, borderTop:`2px solid ${accent}`, borderLeft:`2px solid ${accent}`, borderTopLeftRadius:8, opacity:.5 }} />
             <div style={{ fontSize:'1.3rem', marginBottom:10 }}>{s.icon}</div>
-            <div style={{ fontFamily:'Orbitron,monospace', fontSize:'1.4rem', fontWeight:700, color:accent, marginBottom:4 }}>{s.val}</div>
+            <div style={{ fontFamily:"'DM Sans', sans-serif", fontSize:'1.4rem', fontWeight:700, color:accent, marginBottom:4 }}>{s.val}</div>
             <div style={{ fontSize:'.72rem', color:text3, textTransform:'uppercase', letterSpacing:'.08em' }}>{s.label}</div>
           </div>
         ))}
@@ -191,7 +210,7 @@ export default function DashboardTab({ user, accent }: Props) {
       {/* Up Next & Priorities Row */}
       <div className="dash-grid-halves">
         {/* Agenda */}
-        <Card title="📅 Up Next" accent={accent}>
+        <Card title="📅 Up Next">
           {agenda.length === 0 ? (
             <div style={{ color:text3, fontSize:'.85rem', textAlign:'center', padding:'20px 0' }}>No scheduled events remaining today! 🎉</div>
           ) : (
@@ -210,7 +229,7 @@ export default function DashboardTab({ user, accent }: Props) {
         </Card>
 
         {/* Priorities */}
-        <Card title="🚀 Top Priorities" accent={accent}>
+        <Card title="🚀 Top Priorities">
           {pendingTasks.length === 0 ? (
             <div style={{ color:text3, fontSize:'.85rem', textAlign:'center', padding:'20px 0' }}>All caught up on tasks! ✅</div>
           ) : (
@@ -234,7 +253,7 @@ export default function DashboardTab({ user, accent }: Props) {
 
       {/* Timeline + Weekly */}
       <div className="dash-grid-timeline">
-        <Card title="📅 Today's Timeline" accent={accent}>
+        <Card title="📅 Today's Timeline">
           {entries.length === 0
             ? <p style={{ color:text3, fontSize:'.88rem', textAlign:'center', padding:'24px 0' }}>No entries yet. Start the timer above!</p>
             : <>
@@ -256,7 +275,7 @@ export default function DashboardTab({ user, accent }: Props) {
           }
         </Card>
 
-        <Card title="📊 This Week" accent={accent}>
+        <Card title="📊 This Week">
           <div style={{ display:'flex', alignItems:'flex-end', gap:8, height:100 }}>
             {weekHours.map((h,i) => (
               <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
@@ -282,7 +301,7 @@ export default function DashboardTab({ user, accent }: Props) {
 
       {/* Breakdown */}
       {summary && summary.breakdown.length > 0 && (
-        <Card title="🗂️ Today's Breakdown" accent={accent}>
+        <Card title="🗂️ Today's Breakdown">
           <div className="dash-grid-halves" style={{ gap: 12 }}>
             {summary.breakdown.map(b => (
               <div key={b.category}>

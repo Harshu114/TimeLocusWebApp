@@ -119,14 +119,14 @@ export default function LoginPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Exo+2:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #080c14; }
 
         .lp-root {
           min-height: 100vh; width: 100%; display: flex; align-items: center;
           justify-content: center; background: #080c14; position: relative;
-          overflow: hidden; font-family: 'Exo 2', sans-serif;
+          overflow: hidden; font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
         /* radial mesh background */
@@ -194,12 +194,12 @@ export default function LoginPage() {
         .lp-logo { display:flex; align-items:center; gap:10px; margin-bottom:32px; }
         .lp-logo-icon { width:36px; height:36px; }
         .lp-logo-icon svg { filter: drop-shadow(0 0 10px #00dcff); }
-        .lp-logo-name { font-family:'Orbitron',monospace; font-weight:700; font-size:1.05rem; letter-spacing:.18em; color:#00dcff; text-shadow:0 0 24px rgba(0,220,255,.55); }
+        .lp-logo-name { font-family:'DM+Sans',sans-serif; font-weight:700; font-size:1.05rem; letter-spacing:.18em; color:#00dcff; text-shadow:0 0 24px rgba(0,220,255,.55); }
 
         /* step labels */
         .lp-step-label { font-size:.66rem; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:rgba(0,220,255,.45); margin-bottom:12px; }
 
-        .lp-heading { font-family:'Orbitron',monospace; font-weight:700; font-size:1.55rem; color:#fff; margin-bottom:6px; letter-spacing:-.01em; }
+        .lp-heading { font-family:'DM+Sans',sans-serif; font-weight:700; font-size:1.55rem; color:#fff; margin-bottom:6px; letter-spacing:-.01em; }
         .lp-sub { font-size:.88rem; color:rgba(255,255,255,.3); margin-bottom:28px; }
 
         /* user greeting */
@@ -227,7 +227,7 @@ export default function LoginPage() {
         .lp-input-wrap { position:relative; }
         .lp-input {
           width:100%; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.09);
-          padding:13px 16px; border-radius:4px; color:#fff; font-family:'Exo 2',sans-serif;
+          padding:13px 16px; border-radius:4px; color:#fff; font-family:'Plus Jakarta Sans',sans-serif;
           font-size:.92rem; font-weight:500; outline:none; transition:.22s;
         }
         .lp-input::placeholder { color:rgba(255,255,255,.18); }
@@ -243,7 +243,7 @@ export default function LoginPage() {
           width:100%; position:relative; overflow:hidden;
           background:linear-gradient(105deg,#00b8d4,#8c3cff);
           border:none; padding:15px; border-radius:4px; color:#fff;
-          font-family:'Orbitron',monospace; font-weight:600; font-size:.72rem;
+          font-family:'DM+Sans',sans-serif; font-weight:600; font-size:.72rem;
           letter-spacing:.18em; text-transform:uppercase; cursor:pointer;
           transition:.2s; box-shadow:0 0 30px rgba(0,184,212,.2),0 0 60px rgba(140,60,255,.1);
         }
@@ -264,7 +264,7 @@ export default function LoginPage() {
         .lp-divider { flex:1; height:1px; background:rgba(255,255,255,.06); margin:0 12px; align-self:center; }
 
         /* back button */
-        .lp-back { display:inline-flex; align-items:center; gap:6px; background:none; border:none; color:rgba(255,255,255,.3); font-size:.78rem; cursor:pointer; font-family:'Exo 2',sans-serif; margin-bottom:20px; transition:.2s; padding:0; }
+        .lp-back { display:inline-flex; align-items:center; gap:6px; background:none; border:none; color:rgba(255,255,255,.3); font-size:.78rem; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; margin-bottom:20px; transition:.2s; padding:0; }
         .lp-back:hover { color:#00dcff; }
 
         /* step transition */
@@ -318,6 +318,7 @@ export default function LoginPage() {
               <h1 className="lp-heading">Welcome back</h1>
               <p className="lp-sub">Enter your email to continue</p>
               {error && <div className="lp-error">{error}</div>}
+              {info && <div className="lp-info">{info}</div>}
               <div className="lp-field">
                 <label className="lp-label">Email Address</label>
                 <div className="lp-input-wrap">
@@ -329,7 +330,7 @@ export default function LoginPage() {
               <button className="lp-btn" onClick={checkEmail} disabled={loading}>
                 <span className="lp-btn-inner">{loading ? <><span className="lp-spin"/>Checking...</> : 'Continue →'}</span>
               </button>
-              <p className="lp-signup-hint">New here? <a href="/signup">Create account</a></p>
+              <p className="lp-signup-hint">New here? <a href={`/signup?email=${encodeURIComponent(email)}`}>Create account</a></p>
             </div>
           )}
 

@@ -1,6 +1,6 @@
 'use client';
 // components/dashboard/Header.tsx
-// Top sticky header bar — theme-aware, includes ThemeToggle switch.
+// Top sticky header bar — theme-aware, displays user info and settings access
 
 import { User } from '../../types';
 import { USER_TYPE_CONFIG, accentRgb } from '../../lib/constants';
@@ -11,13 +11,13 @@ interface HeaderProps {
   user: User;
   activeNav: string;
   currentTime: Date;
+  onSettingsOpen?: () => void;
 }
 
-export default function Header({ user, activeNav, currentTime }: HeaderProps) {
+export default function Header({ user, activeNav, currentTime, onSettingsOpen }: HeaderProps) {
   const cfg     = USER_TYPE_CONFIG[user.userType] || USER_TYPE_CONFIG.student;
-  const accent  = cfg.accent;
+  const { isDark, accent } = useTheme();  // Use theme accent instead of cfg.accent
   const accentR = accentRgb(accent);
-  const { isDark } = useTheme();
 
   return (
     <header style={{
@@ -33,7 +33,7 @@ export default function Header({ user, activeNav, currentTime }: HeaderProps) {
       {/* Tab title with accent underline */}
       <div style={{ position: 'relative' }}>
         <span style={{
-          fontFamily: 'Orbitron, monospace',
+          fontFamily: "'DM Sans', sans-serif",
           fontSize: '1rem', fontWeight: 700,
           color: 'var(--text)',
           letterSpacing: '0.05em',
@@ -69,6 +69,36 @@ export default function Header({ user, activeNav, currentTime }: HeaderProps) {
           </span>
         </div>
 
+        {/* Settings button */}
+        {onSettingsOpen && (
+          <button
+            onClick={onSettingsOpen}
+            title="Settings"
+            style={{
+              width: 36, height: 36,
+              borderRadius: 6,
+              border: `1px solid rgba(${accentR},.2)`,
+              background: isDark ? 'rgba(255,255,255,.03)' : 'rgba(100,130,200,.08)',
+              color: accent,
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '1rem',
+              transition: 'all 0.2s',
+              backdropFilter: 'blur(8px)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = `rgba(${accentR},.15)`;
+              e.currentTarget.style.borderColor = `rgba(${accentR},.4)`;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = isDark ? 'rgba(255,255,255,.03)' : 'rgba(100,130,200,.08)';
+              e.currentTarget.style.borderColor = `rgba(${accentR},.2)`;
+            }}
+          >
+            ⚙️
+          </button>
+        )}
+
         {/* Theme toggle */}
         <ThemeToggle size="sm" />
 
@@ -87,7 +117,7 @@ export default function Header({ user, activeNav, currentTime }: HeaderProps) {
         {/* Avatar */}
         <div style={{
           width: 36, height: 36, borderRadius: '50%',
-          background: `linear-gradient(135deg, ${accent}, #8c3cff)`,
+          background: `linear-gradient(135deg, ${accent}, var(--accent-light))`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontWeight: 700, fontSize: '.85rem', color: '#fff',
           boxShadow: `0 0 12px rgba(${accentR},.3)`,

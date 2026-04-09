@@ -22,7 +22,54 @@ const MOODS = [
   { key:'tired',   emoji:'😴', label:'Tired',    color:'#888888' },
 ];
 
+const PROMPTS = [
+  "What's on your mind today?",
+  "How was your day? What are you grateful for?",
+  "Describe a moment that made you smile today.",
+  "What challenged you today and how did you handle it?",
+  "What are three things you accomplished today?",
+  "How are you feeling right now and why?",
+  "What would you like to improve tomorrow?",
+  "Describe something you learned today.",
+  "What made you laugh or feel light today?",
+  "How did you practice self-care today?",
+  "What's something you're looking forward to?",
+  "Write about a person who made a positive impact on you.",
+  "What's one small win you had today?",
+  "Describe your emotions in three words.",
+  "What would your ideal day look like?",
+];
+
 const moodFor = (key: string) => MOODS.find(m => m.key === key) || MOODS[2];
+
+const getRandomPrompt = () => PROMPTS[Math.floor(Math.random() * PROMPTS.length)];
+
+const calculateStreak = (entries: JournalEntry[]): number => {
+  if (entries.length === 0) return 0;
+  const sortedDates = [...new Set(entries.map(e => e.date))].sort().reverse();
+  let streak = 0;
+  const today = new Date();
+  for (let i = 0; i < sortedDates.length; i++) {
+    const entryDate = new Date(sortedDates[i] + 'T00:00');
+    const expectedDate = new Date(today);
+    expectedDate.setDate(today.getDate() - i);
+    if (entryDate.toDateString() === expectedDate.toDateString()) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+  return streak;
+};
+
+const calculateTotalWords = (entries: JournalEntry[]): number => {
+  return entries.reduce((sum, e) => sum + e.entry.trim().split(/\s+/).length, 0);
+};
+
+const calculateAvgWordsPerEntry = (entries: JournalEntry[]): number => {
+  if (entries.length === 0) return 0;
+  return Math.round(calculateTotalWords(entries) / entries.length);
+};
 
 export function JournalTab({ accent }: { accent: string }) {
   const { isDark } = useTheme();
@@ -33,6 +80,8 @@ export function JournalTab({ accent }: { accent: string }) {
   const [loading,    setLoading]    = useState(false);
   const [expanded,   setExpanded]   = useState<string|null>(null);
   const [showForm,   setShowForm]   = useState(false);
+  const [viewMode,   setViewMode]   = useState<'list' | 'timeline'>('list');
+  const [randomPrompt, setRandomPrompt] = useState(getRandomPrompt());
 
   // Theme-aware colors
   const txt       = isDark ? '#fff'                  : '#1a2340';
@@ -70,7 +119,7 @@ export function JournalTab({ accent }: { accent: string }) {
         method: 'POST',
         body: JSON.stringify({ entry:text.trim(), mood, date:new Date().toISOString().slice(0,10) }),
       });
-      setText(''); setMood('neutral'); setShowForm(false); load();
+      setText(''); setMood('neutral'); setShowForm(false); setRandomPrompt(getRandomPrompt()); load();
     } catch {} finally { setLoading(false); }
   };
 
@@ -79,39 +128,71 @@ export function JournalTab({ accent }: { accent: string }) {
   };
 
   const selectedMood = moodFor(mood);
+  const streakCount = calculateStreak(entries);
+  const totalWords = calculateTotalWords(entries);
+  const avgWords = calculateAvgWordsPerEntry(entries);
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
 
-      {/* Stats */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14 }}>
-        <div style={{ background: surface, border: `1px solid ${border}`, borderRadius:8, padding:16, boxShadow: shadow }}>
-          <div style={{ fontSize:'1.2rem', marginBottom:6 }}>📖</div>
-          <div style={{ fontFamily:'Orbitron,monospace', fontSize:'1.3rem', fontWeight:700, color:accent }}>{stats.total}</div>
-          <div style={{ fontSize:'.72rem', color: text3, textTransform:'uppercase', letterSpacing:'.08em' }}>Total Entries</div>
+      {/* Stats Grid - Enhanced Dashboard */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(120px, 1fr))', gap:12 }}>
+        <div style={{ background: surface, border: `1px solid ${border}`, borderRadius:8, padding:14, boxShadow: shadow }}>
+          <div style={{ fontSize:'1rem', marginBottom:4 }}>📖</div>
+          <div style={{ fontFamily:"'DM Sans', sans-serif", fontSize:'1.2rem', fontWeight:700, color:accent }}>{stats.total}</div>
+          <div style={{ fontSize:'.65rem', color: text3, textTransform:'uppercase', letterSpacing:'.06em', marginTop:2 }}>Entries</div>
         </div>
-        <div style={{ background: surface, border: `1px solid ${border}`, borderRadius:8, padding:16, boxShadow: shadow }}>
-          <div style={{ fontSize:'1.2rem', marginBottom:6 }}>{stats.mostFrequent ? moodFor(stats.mostFrequent).emoji : '😐'}</div>
-          <div style={{ fontFamily:'Orbitron,monospace', fontSize:'1.1rem', fontWeight:700, color:stats.mostFrequent?moodFor(stats.mostFrequent).color:accent }}>
+        <div style={{ background: surface, border: `1px solid ${border}`, borderRadius:8, padding:14, boxShadow: shadow }}>
+          <div style={{ fontSize:'1rem', marginBottom:4 }}>{stats.mostFrequent ? moodFor(stats.mostFrequent).emoji : '😐'}</div>
+          <div style={{ fontFamily:"'DM Sans', sans-serif", fontSize:'.95rem', fontWeight:700, color:stats.mostFrequent?moodFor(stats.mostFrequent).color:accent, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
             {stats.mostFrequent ? moodFor(stats.mostFrequent).label : 'N/A'}
           </div>
-          <div style={{ fontSize:'.72rem', color: text3, textTransform:'uppercase', letterSpacing:'.08em' }}>Most Common Mood</div>
+          <div style={{ fontSize:'.65rem', color: text3, textTransform:'uppercase', letterSpacing:'.06em', marginTop:2 }}>Mood</div>
         </div>
-        <div style={{ background: surface, border: `1px solid ${border}`, borderRadius:8, padding:16, boxShadow: shadow }}>
-          <div style={{ fontSize:'1.2rem', marginBottom:6 }}>📅</div>
-          <div style={{ fontFamily:'Orbitron,monospace', fontSize:'1.3rem', fontWeight:700, color:accent }}>
+        <div style={{ background: surface, border: `1px solid ${border}`, borderRadius:8, padding:14, boxShadow: shadow }}>
+          <div style={{ fontSize:'1rem', marginBottom:4 }}>🔥</div>
+          <div style={{ fontFamily:"'DM Sans', sans-serif", fontSize:'1.2rem', fontWeight:700, color:streakCount>0?accent:text3 }}>{streakCount}</div>
+          <div style={{ fontSize:'.65rem', color: text3, textTransform:'uppercase', letterSpacing:'.06em', marginTop:2 }}>Streak</div>
+        </div>
+        <div style={{ background: surface, border: `1px solid ${border}`, borderRadius:8, padding:14, boxShadow: shadow }}>
+          <div style={{ fontSize:'1rem', marginBottom:4 }}>📝</div>
+          <div style={{ fontFamily:"'DM Sans', sans-serif", fontSize:'1.2rem', fontWeight:700, color:accent }}>{totalWords}</div>
+          <div style={{ fontSize:'.65rem', color: text3, textTransform:'uppercase', letterSpacing:'.06em', marginTop:2 }}>Words</div>
+        </div>
+        <div style={{ background: surface, border: `1px solid ${border}`, borderRadius:8, padding:14, boxShadow: shadow }}>
+          <div style={{ fontSize:'1rem', marginBottom:4 }}>✍️</div>
+          <div style={{ fontFamily:"'DM Sans', sans-serif", fontSize:'1.2rem', fontWeight:700, color:accent }}>{avgWords}</div>
+          <div style={{ fontSize:'.65rem', color: text3, textTransform:'uppercase', letterSpacing:'.06em', marginTop:2 }}>Avg/Entry</div>
+        </div>
+        <div style={{ background: surface, border: `1px solid ${border}`, borderRadius:8, padding:14, boxShadow: shadow }}>
+          <div style={{ fontSize:'1rem', marginBottom:4 }}>📅</div>
+          <div style={{ fontFamily:"'DM Sans', sans-serif", fontSize:'.9rem', fontWeight:700, color:accent, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
             {entries.length > 0 ? new Date(entries[0].date+'T00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}) : '—'}
           </div>
-          <div style={{ fontSize:'.72rem', color: text3, textTransform:'uppercase', letterSpacing:'.08em' }}>Last Entry</div>
+          <div style={{ fontSize:'.65rem', color: text3, textTransform:'uppercase', letterSpacing:'.06em', marginTop:2 }}>Last</div>
         </div>
       </div>
 
-      {/* New entry button */}
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-        <h3 style={{ color: txt, fontFamily:'Orbitron,monospace', fontSize:'1rem' }}>📝 My Journal</h3>
-        <button onClick={() => setShowForm(v=>!v)} style={{ padding:'9px 20px', background:accent, border:'none', borderRadius:4, color:'#000', fontWeight:700, cursor:'pointer', fontSize:'.85rem' }}>
-          {showForm ? '✕ Cancel' : '+ New Entry'}
-        </button>
+      {/* New entry button & View toggle */}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:12 }}>
+        <h3 style={{ color: txt, fontFamily:"'DM Sans', sans-serif", fontSize:'1rem', margin:0 }}>📝 My Journal</h3>
+        <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+          {entries.length > 0 && (
+            <div style={{ display:'flex', gap:4, background: surface2, border: `1px solid ${border}`, borderRadius:4, padding:4 }}>
+              <button onClick={() => setViewMode('list')} style={{
+                padding:'6px 12px', background: viewMode==='list'?accent:'transparent', border:'none', borderRadius:3,
+                color: viewMode==='list'?'#000':txt, fontWeight: viewMode==='list'?700:500, cursor:'pointer', fontSize:'.8rem', transition:'.2s'
+              }}>📋 List</button>
+              <button onClick={() => setViewMode('timeline')} style={{
+                padding:'6px 12px', background: viewMode==='timeline'?accent:'transparent', border:'none', borderRadius:3,
+                color: viewMode==='timeline'?'#000':txt, fontWeight: viewMode==='timeline'?700:500, cursor:'pointer', fontSize:'.8rem', transition:'.2s'
+              }}>📅 Timeline</button>
+            </div>
+          )}
+          <button onClick={() => setShowForm(v=>!v)} style={{ padding:'8px 16px', background:accent, border:'none', borderRadius:4, color:'#000', fontWeight:700, cursor:'pointer', fontSize:'.85rem', whiteSpace:'nowrap' }}>
+            {showForm ? '✕ Cancel' : '+ New Entry'}
+          </button>
+        </div>
       </div>
 
       {/* Write entry form */}
@@ -134,17 +215,25 @@ export function JournalTab({ accent }: { accent: string }) {
             ))}
           </div>
 
+          {/* Prompt suggestion */}
+          <div style={{ background: `${accent}11`, border: `1px solid ${accent}33`, borderRadius:6, padding:10, marginBottom:14, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <span style={{ fontSize:'.8rem', color: text5, fontStyle:'italic' }}>💡 {randomPrompt}</span>
+            <button onClick={() => setRandomPrompt(getRandomPrompt())} style={{
+              background:'none', border:'none', color: accent, cursor:'pointer', fontSize:'.85rem', fontWeight:600, padding:'0 8px'
+            }}>↻ New</button>
+          </div>
+
           {/* Text area */}
           <textarea
             value={text}
             onChange={e => setText(e.target.value)}
-            placeholder={`What's on your mind today? How was your day? What are you grateful for?`}
+            placeholder="Start writing your thoughts here..."
             rows={5}
             style={{ width:'100%', background: inputBg, border: `1px solid ${inputBdr}`, borderRadius:6, padding:'13px 16px', color: txt, fontFamily:'inherit', fontSize:'.9rem', outline:'none', resize:'vertical', lineHeight:1.6, boxSizing:'border-box' }}
           />
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:12 }}>
             <span style={{ fontSize:'.78rem', color: text3 }}>{text.length} characters</span>
-            <button onClick={submit} disabled={loading||!text.trim()} style={{ padding:'10px 24px', background:accent, border:'none', borderRadius:4, color:'#000', fontWeight:700, cursor:'pointer', opacity:loading||!text.trim()?.6:1 }}>
+            <button onClick={submit} disabled={loading||!text.trim()} style={{ padding:'10px 24px', background:accent, border:'none', borderRadius:4, color:'#000', fontWeight:700, cursor:'pointer', opacity:loading||!text.trim()?0.6:1 }}>
               {loading ? 'Saving...' : `Save Entry ${selectedMood.emoji}`}
             </button>
           </div>
@@ -173,12 +262,13 @@ export function JournalTab({ accent }: { accent: string }) {
         </div>
       )}
 
-      {/* Entries list */}
+      {/* Entries display - List or Timeline view */}
       {entries.length === 0 ? (
         <p style={{ color: text3, textAlign:'center', padding:40, fontSize:'.9rem' }}>
           No journal entries yet. Write your first entry above! ✍️
         </p>
-      ) : (
+      ) : viewMode === 'list' ? (
+        /* LIST VIEW */
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
           {entries.map(e => {
             const m   = moodFor(e.mood);
@@ -210,6 +300,71 @@ export function JournalTab({ accent }: { accent: string }) {
                     <p style={{ color: text5, fontSize:'.88rem', lineHeight:1.7, marginTop:10, whiteSpace:'pre-wrap' }}>{e.entry}</p>
                   </div>
                 )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* TIMELINE VIEW */
+        <div style={{ position:'relative', paddingLeft:24 }}>
+          {/* Timeline line */}
+          <div style={{ position:'absolute', left:8, top:0, bottom:0, width:'2px', background: `linear-gradient(180deg, ${accent} 0%, ${accent}44 100%)` }} />
+          
+          {/* Group entries by date */}
+          {Object.entries(
+            entries.reduce((acc, entry) => {
+              const date = entry.date;
+              if (!acc[date]) acc[date] = [];
+              acc[date].push(entry);
+              return acc;
+            }, {} as Record<string, JournalEntry[]>)
+          ).sort(([dateA], [dateB]) => dateB.localeCompare(dateA)).map(([date, dateEntries]) => {
+            const dateObj = new Date(date + 'T00:00');
+            const isToday = new Date().toDateString() === dateObj.toDateString();
+            const isYesterday = new Date(Date.now() - 86400000).toDateString() === dateObj.toDateString();
+            const dateLabel = isToday ? 'Today' : isYesterday ? 'Yesterday' : dateObj.toLocaleDateString('en-IN', { month:'short', day:'numeric', year: dateObj.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined });
+            
+            return (
+              <div key={date} style={{ marginBottom:28 }}>
+                {/* Date marker */}
+                <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:12 }}>
+                  <div style={{ position:'absolute', left:0, width:'18px', height:'18px', background: accent, border: `2px solid ${isDark?'#0a0e27':'#fff'}`, borderRadius:'50%', zIndex:2 }} />
+                  <div>
+                    <div style={{ fontSize:'.75rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'.08em', color: accent }}>
+                      {dateLabel}
+                    </div>
+                    <div style={{ fontSize:'.7rem', color:text3, marginTop:2 }}>
+                      {dateEntries.length} {dateEntries.length===1?'entry':'entries'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Entries for this date */}
+                <div style={{ display:'flex', flexDirection:'column', gap:8, marginLeft:4 }}>
+                  {dateEntries.map(e => {
+                    const m = moodFor(e.mood);
+                    const exp = expanded === e.id;
+                    return (
+                      <div key={e.id} style={{ background: surface2, border: `1px solid ${m.color}44`, borderRadius:6, overflow:'hidden', cursor:'pointer' }}>
+                        <div onClick={() => setExpanded(exp ? null : e.id)} style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 14px' }}>
+                          <span style={{ fontSize:'1.2rem' }}>{m.emoji}</span>
+                          <div style={{ flex:1 }}>
+                            <div style={{ color: txt, fontSize:'.85rem', fontWeight:500 }}>
+                              {e.entry.length > 60 && !exp ? e.entry.slice(0,60)+'...' : e.entry.slice(0,60)}
+                            </div>
+                            <div style={{ fontSize:'.7rem', color:m.color, marginTop:3 }}>{m.label}</div>
+                          </div>
+                          <button onClick={ev=>{ev.stopPropagation();del(e.id);}} style={{ background:'none', border:'none', color: delClr, cursor:'pointer', fontSize:'.9rem' }}>✕</button>
+                        </div>
+                        {exp && (
+                          <div style={{ padding:'0 14px 12px 44px', borderTop: `1px solid ${border}`, background: `${accent}08` }}>
+                            <p style={{ color: text5, fontSize:'.8rem', lineHeight:1.6, marginTop:8, whiteSpace:'pre-wrap' }}>{e.entry}</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             );
           })}

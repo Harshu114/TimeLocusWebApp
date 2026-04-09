@@ -69,7 +69,7 @@ export function ProgressTab({ accent }: { accent: string }) {
         ].map((s, i) => (
           <div key={i} style={{ background: surface, border: `1px solid ${border}`, borderRadius:8, padding:'18px 16px', boxShadow: shadow }}>
             <div style={{ fontSize:'1.2rem', marginBottom:8 }}>{s.icon}</div>
-            <div style={{ fontFamily:'Orbitron,monospace', fontSize:'1.2rem', fontWeight:700, color:accent, marginBottom:3 }}>{s.val}</div>
+            <div style={{ fontFamily:"'DM Sans', sans-serif", fontSize:'1.2rem', fontWeight:700, color:accent, marginBottom:3 }}>{s.val}</div>
             <div style={{ fontSize:'.72rem', color: text3, textTransform:'uppercase', letterSpacing:'.08em' }}>{s.label}</div>
           </div>
         ))}
@@ -77,7 +77,7 @@ export function ProgressTab({ accent }: { accent: string }) {
 
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:18 }}>
         {/* Weekly bar chart */}
-        <Card title="📊 Weekly Hours" accent={accent}>
+        <Card title="📊 Weekly Hours">
           {weekTotal === 0
             ? <p style={{ color: text3, textAlign:'center', padding:'20px 0', fontSize:'.85rem' }}>No data yet. Start tracking!</p>
             : <>
@@ -99,7 +99,7 @@ export function ProgressTab({ accent }: { accent: string }) {
         </Card>
 
         {/* Category breakdown */}
-        <Card title="🗂️ Time by Category" accent={accent}>
+        <Card title="🗂️ Time by Category">
           {Object.keys(breakdown).length === 0
             ? <p style={{ color: text3, textAlign:'center', padding:'20px 0', fontSize:'.85rem' }}>No tracked time this week.</p>
             : Object.entries(breakdown).map(([cat, mins]) => (
@@ -121,14 +121,14 @@ export function ProgressTab({ accent }: { accent: string }) {
 
       {/* Daily focus scores */}
       {weekly.length > 0 && (
-        <Card title="🎯 Daily Focus Scores This Week" accent={accent}>
+        <Card title="🎯 Daily Focus Scores This Week">
           <div style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
             {weekly.map((d, i) => {
               const score = Math.round(d.focusScore || 0);
               const color = score >= 70 ? '#00ff88' : score >= 40 ? accent : '#ff6b35';
               return (
                 <div key={i} style={{ flex:1, minWidth:90, textAlign:'center', padding:'14px 8px', background: isDark ? 'rgba(255,255,255,.03)' : 'rgba(100,130,200,0.04)', borderRadius:6, border:`1px solid ${color}33` }}>
-                  <div style={{ fontFamily:'Orbitron,monospace', fontSize:'1.2rem', fontWeight:700, color, marginBottom:4 }}>{score}%</div>
+                  <div style={{ fontFamily:"'DM Sans', sans-serif", fontSize:'1.2rem', fontWeight:700, color, marginBottom:4 }}>{score}%</div>
                   <div style={{ fontSize:'.7rem', color: text4 }}>
                     {new Date(d.date + 'T00:00').toLocaleDateString('en-IN', { weekday:'short', day:'numeric' })}
                   </div>
@@ -283,7 +283,7 @@ export function AIAssistantTab({ accent, user }: { accent: string; user: User })
           style={{
             padding:'14px 24px', background: accent, border:'none',
             borderRadius:8, color:'#000', fontWeight:700, cursor:'pointer',
-            fontFamily:'Orbitron,monospace', fontSize:'.75rem', letterSpacing:'.05em',
+            fontFamily:"'DM Sans', sans-serif", fontSize:'.75rem', letterSpacing:'.05em',
             opacity: loading || !input.trim() ? .5 : 1,
           }}
         >Send</button>

@@ -17,6 +17,7 @@ public record RegisterRequest(
         Integer                           age,
         String                            gender,
         String                            profession,
+        String                            aim,
                             String        userTypeRaw   // raw string, converted below
 ) {
     // Convert the raw string to enum — handles lowercase AND uppercase
@@ -39,8 +40,9 @@ public record RegisterRequest(
             @JsonProperty("age")        Integer age,
             @JsonProperty("gender")     String gender,
             @JsonProperty("profession") String profession,
+            @JsonProperty("aim")        String aim,
             @JsonProperty("userType")   String userType
     ) {
-        return new RegisterRequest(firstName, lastName, email, password, age, gender, profession, userType);
+        return new RegisterRequest(firstName, lastName, email, password, age, gender, profession, aim, userType);
     }
 }

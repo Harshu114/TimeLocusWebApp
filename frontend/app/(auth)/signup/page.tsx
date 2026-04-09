@@ -49,7 +49,7 @@ const USER_TYPES: { key: UserType; label: string; emoji: string; desc: string; c
 export default function SignupPage() {
   const [step, setStep] = useState<Step>('info');
   const { isDark } = useTheme();
-  const [form, setForm] = useState({ firstName: '', lastName: '', age: '', gender: '', profession: '', email: '', password: '', confirmPassword: '' });
+  const [form, setForm] = useState({ firstName: '', lastName: '', age: '', gender: '', profession: '', aim: '', email: '', password: '', confirmPassword: '' });
   const [userType, setUserType] = useState<UserType>('');
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -71,6 +71,7 @@ export default function SignupPage() {
     if (!form.firstName.trim() || !form.lastName.trim()) return 'Enter your full name.';
     if (!form.age || isNaN(+form.age) || +form.age < 10 || +form.age > 100) return 'Enter a valid age.';
     if (!form.gender) return 'Select your gender.';
+    if (!form.aim.trim()) return 'Tell us your aim for joining TimeLocus.';
     return '';
   };
 
@@ -120,14 +121,14 @@ export default function SignupPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Exo+2:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Inter:wght@300;400;500;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: var(--bg, #080c14); }
 
         .sp-root {
           min-height: 100vh; width: 100%; display: flex; align-items: center;
           justify-content: center; background: #080c14; position: relative;
-          overflow: hidden; font-family: 'Exo 2', sans-serif; padding: 24px;
+          overflow: hidden; font-family: 'DM Sans', sans-serif; padding: 24px;
         }
         .sp-bg { position:absolute; inset:0; pointer-events:none;
           background: radial-gradient(ellipse 80% 60% at 20% 20%, rgba(0,220,255,.05) 0%, transparent 60%),
@@ -161,14 +162,14 @@ export default function SignupPage() {
 
         .sp-logo { display:flex;align-items:center;gap:10px;margin-bottom:28px; }
         .sp-logo-icon svg { filter:drop-shadow(0 0 10px #00dcff); }
-        .sp-logo-name { font-family:'Orbitron',monospace;font-weight:700;font-size:1.05rem;letter-spacing:.18em;color:#00dcff;text-shadow:0 0 24px rgba(0,220,255,.55); }
+        .sp-logo-name { font-family:'Sora',sans-serif;font-weight:700;font-size:1.05rem;letter-spacing:.18em;color:#00dcff;text-shadow:0 0 24px rgba(0,220,255,.55); }
 
         /* progress bar */
         .sp-progress { display:flex;gap:6px;margin-bottom:28px; }
         .sp-prog-dot { flex:1;height:3px;border-radius:2px;transition:.4s; }
 
         .sp-step-label { font-size:.66rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:rgba(0,220,255,.45);margin-bottom:10px; }
-        .sp-heading { font-family:'Orbitron',monospace;font-weight:700;font-size:1.45rem;color:#fff;margin-bottom:6px;letter-spacing:-.01em; }
+        .sp-heading { font-family:'Sora',sans-serif;font-weight:700;font-size:1.45rem;color:#fff;margin-bottom:6px;letter-spacing:-.01em; }
         .sp-sub { font-size:.86rem;color:rgba(255,255,255,.3);margin-bottom:22px; }
 
         .sp-error { background:rgba(255,40,80,.09);border:1px solid rgba(255,40,80,.28);border-radius:4px;color:#ff6080;font-size:.82rem;padding:10px 14px;margin-bottom:16px;animation:shake .35s both; }
@@ -219,7 +220,7 @@ export default function SignupPage() {
           width:100%;position:relative;overflow:hidden;
           background:linear-gradient(105deg,#00b8d4,#8c3cff);
           border:none;padding:15px;border-radius:4px;color:#fff;
-          font-family:'Orbitron',monospace;font-weight:600;font-size:.72rem;
+          font-family:'Sora',sans-serif;font-weight:600;font-size:.72rem;
           letter-spacing:.18em;text-transform:uppercase;cursor:pointer;
           transition:.2s;box-shadow:0 0 30px rgba(0,184,212,.2),0 0 60px rgba(140,60,255,.1);
           margin-top:6px;
@@ -335,6 +336,19 @@ export default function SignupPage() {
                   <label className="sp-label">Profession / Field</label>
                   <div className="sp-input-wrap">
                     <input className="sp-input" placeholder="e.g. Software Engineer, Student, Freelancer" value={form.profession} onChange={set('profession')} autoComplete="organization-title"/>
+                    <span className="sp-glow"/>
+                  </div>
+                </div>
+                <div className="sp-field">
+                  <label className="sp-label">What's your aim to join TimeLocus?</label>
+                  <div className="sp-input-wrap">
+                    <textarea 
+                      className="sp-input" 
+                      placeholder="e.g. Improve productivity, Build better habits, Track time effectively..." 
+                      value={form.aim} 
+                      onChange={(e) => setForm(f => ({ ...f, aim: e.target.value }))}
+                      style={{ minHeight: '80px', resize: 'vertical', fontFamily: "'DM Sans', sans-serif" }}
+                    />
                     <span className="sp-glow"/>
                   </div>
                 </div>

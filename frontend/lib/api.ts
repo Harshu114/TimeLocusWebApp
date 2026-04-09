@@ -8,11 +8,16 @@ export async function api(path: string, opts: RequestInit = {}): Promise<Respons
       ...(opts.headers || {}),
     },
   });
-  if (res.status === 401) {
+  if (res.status === 401 || res.status === 403) {
     localStorage.removeItem('tl_token');
     localStorage.removeItem('tl_user');
     window.location.href = '/login';
     throw new Error('Unauthorized');
+  }
+  if (!res.ok) {
+    let details = '';
+    try { details = await res.text(); } catch {}
+    throw new Error(`API ${res.status} ${path}${details ? `: ${details}` : ''}`);
   }
   return res;
 }

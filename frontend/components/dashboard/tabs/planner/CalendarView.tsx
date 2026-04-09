@@ -64,7 +64,7 @@ export function CalendarView({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <button onClick={() => setCursor(new Date(year, month - 1, 1))}
             style={{ background: s2, border: `1px solid ${br}`, borderRadius: 6, padding: '4px 12px', color: t, cursor: 'pointer', fontSize: '.9rem' }}>‹</button>
-          <span style={{ fontFamily: 'Orbitron,monospace', fontSize: '.95rem', fontWeight: 700, color: t }}>{monthLabel}</span>
+          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '.95rem', fontWeight: 700, color: t }}>{monthLabel}</span>
           <button onClick={() => setCursor(new Date(year, month + 1, 1))}
             style={{ background: s2, border: `1px solid ${br}`, borderRadius: 6, padding: '4px 12px', color: t, cursor: 'pointer', fontSize: '.9rem' }}>›</button>
         </div>
@@ -187,7 +187,7 @@ export function WeekView({
           style={{ background: isDark ? 'rgba(255,255,255,.06)' : 'rgba(100,130,200,.08)', border: `1px solid ${br}`,
             borderRadius: 6, padding: '4px 12px', color: t, cursor: 'pointer', fontSize: '.9rem' }}>‹ Prev</button>
         <div>
-          <span style={{ fontFamily: 'Orbitron,monospace', fontSize: '.88rem', fontWeight: 700, color: t }}>{weekLabel}</span>
+          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '.88rem', fontWeight: 700, color: t }}>{weekLabel}</span>
           {weekOffset !== 0 && (
             <button onClick={() => setWeekOffset(0)}
               style={{ marginLeft: 12, background: 'none', border: 'none', color: accent,
@@ -216,7 +216,7 @@ export function WeekView({
                 background: isToday ? `${accent}14` : 'transparent', textAlign: 'center' }}>
                 <div style={{ fontSize: '.65rem', fontWeight: 700, textTransform: 'uppercase',
                   letterSpacing: '.08em', color: isToday ? accent : t3 }}>{WEEKDAY_LABELS[i]}</div>
-                <div style={{ fontFamily: 'Orbitron,monospace', fontSize: '1rem', fontWeight: 700,
+                <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '1rem', fontWeight: 700,
                   color: isToday ? accent : t, marginTop: 2 }}>{day.getDate()}</div>
               </div>
               {/* Events */}

@@ -19,7 +19,6 @@ server:
 spring:
   application:
     name: timelocusbackend
-
   datasource:
     url: jdbc:mysql://localhost:3306/timelocus_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root

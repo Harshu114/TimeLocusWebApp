@@ -289,7 +289,7 @@ function QuarterlyReview({ accent, isDark, t, t2, t3, sf, br, inp }: any) {
       {showNew && (
         <div style={{ background: sf, border: `1px solid ${br}`, borderRadius: 12, padding: 20, marginBottom: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
-            <div style={{ fontFamily: 'Orbitron,monospace', fontSize: '.88rem', fontWeight: 700, color: accent }}>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '.88rem', fontWeight: 700, color: accent }}>
               {currentQuarter()} Review
             </div>
             <div style={{ flex: 1, height: 1, background: br }} />
@@ -330,7 +330,7 @@ function QuarterlyReview({ accent, isDark, t, t2, t3, sf, br, inp }: any) {
           <div onClick={() => setExpanded(expanded === r.id ? null : r.id)}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', cursor: 'pointer' }}>
             <div>
-              <div style={{ fontFamily: 'Orbitron,monospace', fontWeight: 700, fontSize: '.88rem', color: accent }}>{r.quarter}</div>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '.88rem', color: accent }}>{r.quarter}</div>
               <div style={{ fontSize: '.72rem', color: t3, marginTop: 2 }}>{r.date}</div>
             </div>
             <span style={{ color: t3, fontSize: '.8rem' }}>{expanded === r.id ? '▴' : '▾'}</span>

@@ -6,5 +6,8 @@ public record UserResponse(
         String firstName,
         String lastName,
         String email,
-        String userType
+        String userType,
+        String aim,
+        String theme,
+        String themeColor
 ) {}

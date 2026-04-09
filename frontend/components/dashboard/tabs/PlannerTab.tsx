@@ -301,7 +301,7 @@ export default function PlannerTab({ accent, label, user }: { accent: string; la
         {[{ icon: '✅', val: `${doneToday}/${todayEvs.length}`, label: 'Tasks', col: accent }, { icon: '🔥', val: `${openToday}`, label: 'Open', col: openToday > 0 ? '#f07033' : '#00c97a' }, { icon: '📋', val: `${doneSubs}/${allSubs}`, label: 'Steps', col: accent }, { icon: '⏱', val: fmtMins(todayEvs.reduce((a, e) => a + (e.estimatedMins || 0), 0)) || '0m', label: 'Planned', col: t2 }].map((s, i) => (
           <div key={i} style={{ background: sf, border: `1px solid ${br}`, borderRadius: 10, padding: '12px 14px', boxShadow: sh }}>
             <div style={{ fontSize: '1rem', marginBottom: 4 }}>{s.icon}</div>
-            <div style={{ fontFamily: 'Orbitron,monospace', fontWeight: 700, fontSize: '1.1rem', color: s.col, marginBottom: 1 }}>{s.val}</div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: '1.1rem', color: s.col, marginBottom: 1 }}>{s.val}</div>
             <div style={{ fontSize: '.67rem', color: t3, textTransform: 'uppercase', letterSpacing: '.07em' }}>{s.label}</div>
           </div>
         ))}
@@ -529,7 +529,7 @@ export default function PlannerTab({ accent, label, user }: { accent: string; la
       <style>{`@keyframes spin{to{transform:rotate(360deg);}}`}</style>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-        <div><h3 style={{ color: t, fontFamily: 'Orbitron,monospace', fontSize: '1.05rem', marginBottom: 3 }}>{label}</h3><p style={{ color: t3, fontSize: '.79rem' }}>{openToday} open today · {futureEvs.length} upcoming · {inbox.length} in inbox</p></div>
+        <div><h3 style={{ color: t, fontFamily: "'DM Sans', sans-serif", fontSize: '1.05rem', marginBottom: 3 }}>{label}</h3><p style={{ color: t3, fontSize: '.79rem' }}>{openToday} open today · {futureEvs.length} upcoming · {inbox.length} in inbox</p></div>
         <button onClick={() => setShowAdd(p => !p)} style={{ padding: '7px 15px', background: 'transparent', border: `1px solid ${br}`, borderRadius: 8, color: t2, fontWeight: 600, fontSize: '.79rem', cursor: 'pointer' }}>+ Manual</button>
       </div>
 

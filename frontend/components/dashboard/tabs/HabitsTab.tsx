@@ -100,7 +100,7 @@ export function HabitsTab({ accent }: { accent: string }) {
         ].map((s,i) => (
           <div key={i} style={{ background:sf2, border:`1px solid ${br}`, borderRadius:8, padding:'16px', boxShadow:sh }}>
             <div style={{ fontSize:'1.2rem', marginBottom:6 }}>{s.icon}</div>
-            <div style={{ fontFamily:'Orbitron,monospace', fontSize:'1.3rem', fontWeight:700, color:accent }}>{s.val}</div>
+            <div style={{ fontFamily:"'DM Sans', sans-serif", fontSize:'1.3rem', fontWeight:700, color:accent }}>{s.val}</div>
             <div style={{ fontSize:'.72rem', color:t3, textTransform:'uppercase', letterSpacing:'.08em' }}>{s.label}</div>
           </div>
         ))}

@@ -21,7 +21,7 @@ export default function TimeTrackerTab({ accent }: { accent: string }) {
   const [showAdd,  setShowAdd]  = useState(false);
   const [newE, setNewE] = useState({ task:'', start:'', end:'', category:'work' });
   const [loading,  setLoading]  = useState(false);
-  const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -34,8 +34,8 @@ export default function TimeTrackerTab({ accent }: { accent: string }) {
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
     if (running) { timerRef.current = setInterval(()=>setSecs(s=>s+1),1000); }
-    else clearInterval(timerRef.current);
-    return () => clearInterval(timerRef.current);
+    else if (timerRef.current) clearInterval(timerRef.current);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [running]);
 
   const startTimer = async () => {
